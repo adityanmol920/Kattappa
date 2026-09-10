@@ -17,6 +17,7 @@ export function App() {
   const [state, setState] = useState<AppState>(() => storage.read());
   const [showSettings, setShowSettings] = useState(false);
   const [settingsText, setSettingsText] = useState('');
+  const [isOpen, setIsOpen] = useState(false);
   const [draftAnswers, setDraftAnswers] = useState<Answers>(() => storage.read().answers ?? {});
   const [activeQuestion, setActiveQuestion] = useState(0);
   const [phase, setPhase] = useState<Phase>('idle');
@@ -41,6 +42,9 @@ export function App() {
     if (popupPosition) { root.style.left = `${popupPosition.left}px`; root.style.top = `${popupPosition.top}px`; root.style.right = 'auto'; }
     if (popupSize) { root.style.width = `${popupSize.width}px`; root.style.height = `${popupSize.height}px`; }
   }, [popupPosition, popupSize]);
+  useEffect(() => {
+    document.getElementById('kattappa-root')?.classList.toggle('kattappa-collapsed', !isOpen);
+  }, [isOpen]);
   useEffect(() => {
     applyDirectionGate(state.bias ?? 'LOCKED', config);
     const run = () => poll(storage.read(), config);
@@ -79,6 +83,7 @@ export function App() {
     catch { alert('Settings JSON is invalid. Nothing was changed.'); }
   }
   function startDrag(event: React.PointerEvent<HTMLElement>) {
+    if ((event.target as HTMLElement).closest('button')) return;
     const root = document.getElementById('kattappa-root'); if (!root) return;
     event.preventDefault(); const rect = root.getBoundingClientRect();
     const start = { x: event.clientX, y: event.clientY, left: rect.left, top: rect.top };
@@ -111,8 +116,9 @@ export function App() {
     const end = () => { window.removeEventListener('pointermove', move); storage.write({ popupPosition: latestPosition.current, popupSize: latestSize.current }); };
     window.addEventListener('pointermove', move); window.addEventListener('pointerup', end, { once: true });
   }
+  if (!isOpen) return <button className="load-kattappa" type="button" onClick={() => setIsOpen(true)}>Load Kattappa</button>;
   return <main className="kattappa-card">
-    <header onPointerDown={startDrag}><b>Kattappa</b><span>Trading discipline · drag here</span></header>
+    <header onPointerDown={startDrag}><b>Kattappa</b><span>Trading discipline · drag here</span><button type="button" className="close-kattappa" aria-label="Hide Kattappa" title="Hide Kattappa" onClick={() => setIsOpen(false)}>×</button></header>
     <section className="stats"><Stat label="Capital" value={`₹${format(state.capital)}`} /><Stat label="Day P&L" value={`₹${format(state.dayPnl)}`} tone={state.dayPnl == null ? '' : state.dayPnl >= 0 ? 'good' : 'bad'} detail={dayPercent == null ? '' : `${dayPercent.toFixed(2)}%`} /><Stat label="Open P&L" value={`₹${format(state.openTradePnl)}`} tone={state.openTradePnl == null ? '' : state.openTradePnl >= 0 ? 'good' : 'bad'} /><Stat label="Direction" value={state.bias ?? 'LOCKED'} tone={(state.bias ?? 'LOCKED') === 'CE' ? 'good' : (state.bias ?? 'LOCKED') === 'PE' ? 'bad' : 'warn'} /></section>
     {state.killTriggered && <aside className="notice bad"><b>Kill switch triggered.</b> {state.killTriggered.reason}</aside>}
     {state.tradeLossAlert && <aside className="notice warn"><b>Trade-loss alert.</b> {state.tradeLossAlert.percent.toFixed(2)}% of capital reached.</aside>}
