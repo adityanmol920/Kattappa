@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Kattappa Local Preview</title>
+    <style>
+      * { box-sizing: border-box; } body { margin: 0; background: #07101f; color: #eef4ff; font: 14px system-ui, sans-serif; }
+      header { padding: 18px 28px; border-bottom: 1px solid #28364d; background: #0e1a2d; } h1 { margin: 0; font-size: 20px; } header p { margin: 4px 0 0; color: #a8b8d0; }
+      main { padding: 28px; max-width: 900px; } .metrics { display: flex; gap: 12px; margin-bottom: 26px; } .metric { background: #111e32; padding: 16px; border-radius: 10px; min-width: 180px; } .metric small { color: #a8b8d0; display: block; } .metric b { font-size: 22px; display: block; margin-top: 4px; }
+      .profit { color: #5eead4; } .loss { color: #fda4af; } .order-panel { background: #111e32; border-radius: 12px; padding: 18px; width: 480px; } .option-buttons { display: flex; gap: 12px; margin-top: 12px; } button { padding: 10px 18px; border: 0; border-radius: 8px; font-weight: 700; cursor: pointer; } #demo-ce { background: #155e75; color: white; } #demo-pe { background: #9f1239; color: white; }
+      .controls { margin-top: 26px; color: #a8b8d0; } .controls button { margin: 4px; background: #334155; color: white; } #demo-kill { background: #b91c1c; color: white; }
+    </style>
+  </head>
+  <body>
+    <header><h1>Demo Broker — Simulation Only</h1><p>These figures and controls are fake. No trade can be placed here.</p></header>
+    <main>
+      <div class="metrics">
+        <div class="metric"><small>Total capital</small><b id="demo-capital">₹100,000</b></div>
+        <div class="metric"><small>Day P&amp;L</small><b class="profit" id="demo-day-pnl">₹2,500</b></div>
+        <div class="metric"><small>Open trade P&amp;L</small><b class="loss" id="demo-open-pnl">₹-1,000</b></div>
+      </div>
+      <section class="order-panel"><b>Options order panel</b><div class="option-buttons"><button id="demo-ce">Buy CE</button><button id="demo-pe">Buy PE</button></div></section>
+      <section class="controls"><p>Simulation controls:</p><button onclick="setPnl(55000)">Set +₹55,000 day P&amp;L</button><button onclick="setPnl(-11000)">Set −₹11,000 day P&amp;L</button><button onclick="setOpen(-6000)">Set −₹6,000 open P&amp;L</button><button id="demo-kill" onclick="this.textContent='KILL SWITCH ON'">Kill switch</button></section>
+    </main>
+    <script>
+      function formatted(value) { return '₹' + new Intl.NumberFormat('en-IN').format(value); }
+      function setPnl(value) { const el = document.querySelector('#demo-day-pnl'); el.textContent = formatted(value); el.className = value >= 0 ? 'profit' : 'loss'; }
+      function setOpen(value) { const el = document.querySelector('#demo-open-pnl'); el.textContent = formatted(value); el.className = value >= 0 ? 'profit' : 'loss'; }
+    </script>
+    <script src="/bundle.js"></script>
+  </body>
+</html>

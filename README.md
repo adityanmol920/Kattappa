@@ -1,61 +1,46 @@
 # Kattappa
 
-`kattappa.user.js` is Kattappa, a DOM-only Tampermonkey overlay for trading discipline. It includes:
+Kattappa is a modular React/TypeScript Tampermonkey overlay for trading discipline. It operates only through visible browser DOM elements—never through a broker API.
 
-- a six-question directional assessment that locks CE/PE controls until it finds a supported bias;
-- site-local persistent state (capital snapshot, assessment, P&L readings, safety events);
-- configurable detection of visible balance, day P&L, and open-trade P&L;
-- daily profit/loss kill-switch triggers; and
-- a visible trade-loss alert, with an optional, explicitly configured DOM close-action selector.
+## Modules
 
-## Install locally
+- `questionnaire`: the six market-context questions and CE/PE/LOCKED scoring.
+- `dom`: visible-value parsing and CE/PE DOM gating.
+- `protection`: balance, day P&L, and open-trade P&L polling; kill switch; optional trade-close action.
+- `storage`: site-local, cross-tab browser persistence.
+- `settings`: browser selector and risk-limit configuration.
 
-1. Install the Tampermonkey browser extension.
-2. Create a new script and replace its contents with `kattappa.user.js`.
-3. Open your broker site and use **Settings** in the Kattappa popup.
-4. Enter the broker host, page URLs, and verified CSS selectors. Keep `killSwitchEnabled` set to `false` while testing.
-5. Verify that the values displayed in the overlay exactly match the broker page. Only then enable the kill switch.
+## Build
 
-## Selector examples
+Install a current Node.js LTS version, then run:
 
-Selectors are site-specific. Inspect the browser DOM and choose stable data attributes or IDs rather than long generated CSS class names. Example configuration shape:
-
-```json
-{
-  "allowedHosts": ["broker.example.com"],
-  "balanceUrl": "https://broker.example.com/funds",
-  "killSwitchUrl": "https://broker.example.com/risk-controls",
-  "balanceSelector": "[data-testid='available-funds']",
-  "dayPnlSelector": "[data-testid='day-pnl']",
-  "openTradePnlSelector": "[data-testid='open-pnl']",
-  "killSwitchToggleSelector": "[data-testid='kill-switch']",
-  "closeTradeSelector": "[data-testid='close-open-position']",
-  "ceSelectors": ["[data-option='CE']"],
-  "peSelectors": ["[data-option='PE']"],
-  "killSwitchEnabled": false,
-  "automaticTradeCloseEnabled": false
-}
+```bash
+npm install
+npm run typecheck
+npm run build
 ```
 
-Keep `automaticTradeCloseEnabled` set to `false` until you have repeatedly verified the close selector in an isolated/simulated setting. When enabled, the script clicks that visible selector once when the configured open-trade loss threshold is reached. A false selector or broker UI redesign can cause a dangerous unintended click.
+This generates `dist/bundle.js`. The generated bundle is intentionally not committed. GitHub Actions or your local build process should generate it for each release.
 
-## Host on GitHub and auto-update
+## Tampermonkey installation
 
-1. Create a private GitHub repository, for example `kattappa`.
-2. Upload this script and README.
-3. Replace the metadata header’s `@namespace` with your repository URL.
-4. After the repository is public (or you serve the file through an authenticated raw endpoint), add these two lines to the userscript header, using a pinned release URL:
+Edit `scripts/kattappa.user.js` before installing:
 
-```javascript
-// @downloadURL https://raw.githubusercontent.com/YOUR-USER/kattappa/v0.1.0/kattappa.user.js
-// @updateURL   https://raw.githubusercontent.com/YOUR-USER/kattappa/v0.1.0/kattappa.user.js
-```
+1. Replace `YOUR-BROKER.example` with your actual broker domain.
+2. Replace `YOUR-USER` with your GitHub account.
+3. Commit a tagged release, build `dist/bundle.js`, and make the exact versioned raw URL available.
+4. Install the loader script in Tampermonkey.
 
-For each update, create a version tag, update `@version`, and change the URLs to the new immutable tag. Tampermonkey then has one central source to check. Do not expose a private raw URL containing an access token.
+The loader uses `@require` to load the versioned `bundle.js`. This provides a centralized update path without embedding a large bundle in the Tampermonkey editor.
+
+## Broker configuration
+
+Open the broker page, then use Kattappa’s **Settings** panel to set the real CSS selectors and URLs. Use stable IDs or `data-*` attributes where possible. Keep `killSwitchEnabled` and `automaticTradeCloseEnabled` `false` until the values and selectors have been repeatedly verified.
+
+The original one-file proof of concept is retained in `legacy/` only as reference. New changes belong in `src/`.
 
 ## Safety notes
 
-- This script reads and clicks visible webpage elements only; it does not use a broker API.
-- Browser localStorage is origin-scoped: tabs on the same broker site can share state. Different broker domains cannot.
-- Disabling Tampermonkey stops enforcement, even though saved state remains in the browser.
-- Clear only the `kattappa:v1` localStorage key to reset the tool. Clearing all broker storage can log you out and may remove other broker preferences.
+- The trade-loss threshold is currently calculated as a percentage of stored capital; we should refine the basis once the broker pages are connected.
+- Disabling Tampermonkey stops enforcement, even though the saved `kattappa:v2` state remains.
+- Clearing all broker local storage can log you out and remove unrelated broker preferences. Clear Kattappa’s storage key only if you want to reset Kattappa.
