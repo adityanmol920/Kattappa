@@ -24197,18 +24197,41 @@ var Kattappa = (() => {
   // src/main.tsx
   var import_jsx_runtime2 = __toESM(require_jsx_runtime(), 1);
   var styleId = "kattappa-styles";
-  if (!document.getElementById(styleId)) {
-    const style = document.createElement("style");
-    style.id = styleId;
-    style.textContent = styles_default;
-    document.head.append(style);
+  var rootId = "kattappa-root";
+  var reactRoot = null;
+  function isGrowwTerminal() {
+    const isLocalPreview = location.hostname === "localhost" || location.hostname === "127.0.0.1";
+    return isLocalPreview || location.hostname === "915.groww.in" && location.pathname.startsWith("/terminal");
   }
-  if (!document.getElementById("kattappa-root")) {
-    const root = document.createElement("div");
-    root.id = "kattappa-root";
-    document.body.append(root);
-    (0, import_client.createRoot)(root).render(/* @__PURE__ */ (0, import_jsx_runtime2.jsx)(App, {}));
+  function mountKattappa() {
+    if (reactRoot || !isGrowwTerminal() || !document.body) return;
+    if (!document.getElementById(styleId)) {
+      const style = document.createElement("style");
+      style.id = styleId;
+      style.textContent = styles_default;
+      document.head.append(style);
+    }
+    const container = document.createElement("div");
+    container.id = rootId;
+    document.body.append(container);
+    reactRoot = (0, import_client.createRoot)(container);
+    reactRoot.render(/* @__PURE__ */ (0, import_jsx_runtime2.jsx)(App, {}));
   }
+  function unmountKattappa() {
+    if (isGrowwTerminal()) return;
+    reactRoot?.unmount();
+    reactRoot = null;
+    document.getElementById(rootId)?.remove();
+    document.getElementById(styleId)?.remove();
+  }
+  function syncKattappaRoute() {
+    if (isGrowwTerminal()) mountKattappa();
+    else unmountKattappa();
+  }
+  syncKattappaRoute();
+  window.addEventListener("popstate", syncKattappaRoute);
+  window.addEventListener("hashchange", syncKattappaRoute);
+  window.setInterval(syncKattappaRoute, 500);
 })();
 /*! Bundled license information:
 
