@@ -1,10 +1,15 @@
 import { createRoot, type Root } from 'react-dom/client';
 import { App } from './App';
 import styles from './styles.css';
+import { storage } from './modules/storage';
+import { startGrowwBackgroundRuntime } from './modules/runtime';
 
 const styleId = 'kattappa-styles';
 const rootId = 'kattappa-root';
 let reactRoot: Root | null = null;
+
+storage.connect();
+startGrowwBackgroundRuntime();
 
 function isGrowwTerminal() {
   const isLocalPreview = location.hostname === 'localhost' || location.hostname === '127.0.0.1';

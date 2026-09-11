@@ -2,6 +2,8 @@ import type { AppState, Config } from '../../types';
 import { readNumber } from '../dom';
 import { storage } from '../storage';
 
+type OpenInTabApi = typeof globalThis & { GM_openInTab?: (url: string, options?: { active?: boolean; insert?: boolean }) => unknown };
+
 function clickOnce(selector: string, marker: string) {
   const node = document.querySelector<HTMLElement>(selector);
   if (!node || node.dataset[marker]) return false;
@@ -17,7 +19,11 @@ export function poll(state: AppState, config: Config) {
   const reason = dayPercent >= config.profitKillPercent ? `Day profit reached ${dayPercent.toFixed(2)}%` : dayPercent <= -config.lossKillPercent ? `Day loss reached ${dayPercent.toFixed(2)}%` : null;
   if (reason && config.killSwitchEnabled && !state.killTriggered) {
     storage.write({ killTriggered: { reason, at: Date.now() } });
-    if (config.killSwitchUrl && location.href !== config.killSwitchUrl) window.open(config.killSwitchUrl, '_blank', 'noopener');
+    if (config.killSwitchUrl && location.href !== config.killSwitchUrl) {
+      const openInTab = (globalThis as OpenInTabApi).GM_openInTab;
+      if (typeof openInTab === 'function') openInTab(config.killSwitchUrl, { active: true, insert: true });
+      else window.open(config.killSwitchUrl, '_blank', 'noopener');
+    }
   }
   if (state.killTriggered && config.killSwitchEnabled && config.killSwitchToggleSelector) clickOnce(config.killSwitchToggleSelector, 'kattappaKillClicked');
   if (openTradePnl != null && openTradePnl < 0 && Math.abs(openTradePnl / capital * 100) >= config.tradeLossPercent) {

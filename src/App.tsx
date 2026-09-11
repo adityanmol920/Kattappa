@@ -5,7 +5,6 @@ import { defaultConfig } from './modules/settings/config';
 import { questions } from './modules/questionnaire/data';
 import { assess } from './modules/questionnaire/scoring';
 import { applyDirectionGate } from './modules/dom';
-import { poll } from './modules/protection';
 
 const format = (n?: number | null) => n == null ? '—' : new Intl.NumberFormat(undefined, { maximumFractionDigits: 2 }).format(n);
 const clamp = (value: number, minimum: number, maximum: number) => Math.max(minimum, Math.min(maximum, value));
@@ -47,9 +46,6 @@ export function App() {
   }, [isOpen]);
   useEffect(() => {
     applyDirectionGate(state.bias ?? 'LOCKED', config);
-    const run = () => poll(storage.read(), config);
-    run(); const timer = window.setInterval(run, Math.max(1, config.pollingSeconds) * 1000);
-    return () => window.clearInterval(timer);
   }, [configKey, state.bias]);
 
   function chooseAnswer(value: string) {
@@ -125,7 +121,7 @@ export function App() {
     <section className="questionnaire"><div className="progress"><span>Market assessment</span><b>{activeQuestion + 1} / {questions.length}</b></div><div className={`question-stage ${phase}`}><label className="question">{label}<select value={draftAnswers[id] ?? ''} onChange={event => chooseAnswer(event.target.value)} disabled={phase !== 'idle'}><option value="" disabled>Choose an assessment…</option>{options.map(([value, text]) => <option key={value} value={value}>{text}</option>)}</select></label></div><div className="question-nav"><div className="question-nav-left"><button type="button" className="secondary" onClick={() => transition('back')} disabled={activeQuestion === 0 || phase !== 'idle'}>← Back</button>{activeQuestion < questions.length - 1 && <button type="button" onClick={nextQuestion} disabled={!draftAnswers[id] || phase !== 'idle'}>Next →</button>}<button type="button" className="secondary reset-icon" onClick={resetAssessment} aria-label="Reset assessment" title="Reset assessment">↺</button></div>{activeQuestion === questions.length - 1 && draftAnswers[id] && <button type="button" onClick={nextQuestion} disabled={phase !== 'idle'}>Suggest trend</button>}</div></section>
     {result.answered === questions.length && <aside className={`notice ${result.bias === 'CE' ? 'good' : result.bias === 'PE' ? 'bad' : 'warn'}`}><b>Direction result:</b> {result.bias === 'CE' ? 'Bullish — CE access allowed.' : result.bias === 'PE' ? 'Bearish — PE access allowed.' : 'No clear direction — both sides remain locked.'} {state.bias === result.bias ? '' : 'Press Suggest trend to enforce it.'}</aside>}
     <p className="score">Score <b>{result.score}</b> · {result.answered}/6 answered · CE needs +3, PE needs −3.</p>
-    <div className="actions"><button className="secondary" onClick={() => storage.write({ bias: 'LOCKED' })}>Lock both sides</button><button className="secondary" onClick={() => poll(storage.read(), config)}>Refresh values</button><button className="secondary" onClick={() => { setSettingsText(JSON.stringify(config, null, 2)); setShowSettings(!showSettings); }}>Settings</button><button className="danger" onClick={() => storage.write({ killTriggered: null, tradeLossAlert: null })}>Reset alerts</button></div>
+    <div className="actions"><button className="secondary" onClick={() => storage.write({ bias: 'LOCKED' })}>Lock both sides</button><button className="secondary" onClick={() => setState(storage.read())}>Refresh values</button><button className="secondary" onClick={() => { setSettingsText(JSON.stringify(config, null, 2)); setShowSettings(!showSettings); }}>Settings</button><button className="danger" onClick={() => storage.write({ killTriggered: null, tradeLossAlert: null })}>Reset alerts</button></div>
     {showSettings && <section className="settings"><p>Use verified broker URLs and selectors only. Both automatic actions are off by default.</p><textarea value={settingsText} onChange={e => setSettingsText(e.target.value)} /><button onClick={saveSettings}>Save settings</button></section>}
     <footer>DOM-only · Browser storage key: <code>{storage.key}</code></footer>
     {(['n', 'e', 's', 'w'] as const).map(edge => <div key={edge} className={`drag-boundary ${edge}`} onPointerDown={startDrag} aria-label="Drag Kattappa" />)}

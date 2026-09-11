@@ -121,12 +121,12 @@ var Kattappa = (() => {
           return 0 !== diff ? diff : a.id - b.id;
         }
         function advanceTimers(currentTime) {
-          for (var timer = peek(timerQueue); null !== timer; ) {
-            if (null === timer.callback) pop(timerQueue);
-            else if (timer.startTime <= currentTime)
-              pop(timerQueue), timer.sortIndex = timer.expirationTime, push(taskQueue, timer);
+          for (var timer2 = peek(timerQueue); null !== timer2; ) {
+            if (null === timer2.callback) pop(timerQueue);
+            else if (timer2.startTime <= currentTime)
+              pop(timerQueue), timer2.sortIndex = timer2.expirationTime, push(taskQueue, timer2);
             else break;
-            timer = peek(timerQueue);
+            timer2 = peek(timerQueue);
           }
         }
         function handleTimeout(currentTime) {
@@ -23839,22 +23839,56 @@ var Kattappa = (() => {
 
   // src/modules/storage/index.ts
   var KEY = "kattappa:v2";
+  var sharedApi = globalThis;
+  var connected = false;
+  function readLocal() {
+    try {
+      return JSON.parse(localStorage.getItem(KEY) ?? "{}");
+    } catch {
+      return {};
+    }
+  }
+  function writeLocal(value) {
+    try {
+      localStorage.setItem(KEY, JSON.stringify(value));
+    } catch {
+    }
+  }
+  function readShared() {
+    if (typeof sharedApi.GM_getValue !== "function") return null;
+    return sharedApi.GM_getValue(KEY, null);
+  }
   var storage = {
+    connect() {
+      if (connected) return;
+      connected = true;
+      const local = readLocal();
+      const shared = readShared();
+      const merged = { ...local, ...shared ?? {} };
+      writeLocal(merged);
+      if (typeof sharedApi.GM_setValue === "function" && Object.keys(merged).length) sharedApi.GM_setValue(KEY, merged);
+      sharedApi.GM_addValueChangeListener?.(KEY, (_key, _oldValue, newValue) => {
+        const next = newValue ?? {};
+        writeLocal(next);
+        window.dispatchEvent(new Event("kattappa:update"));
+      });
+    },
     read() {
-      try {
-        return JSON.parse(localStorage.getItem(KEY) ?? "{}");
-      } catch {
-        return {};
-      }
+      return readShared() ?? readLocal();
     },
     write(patch) {
       const next = { ...this.read(), ...patch };
-      localStorage.setItem(KEY, JSON.stringify(next));
+      writeLocal(next);
+      sharedApi.GM_setValue?.(KEY, next);
       window.dispatchEvent(new Event("kattappa:update"));
       return next;
     },
     clear() {
-      localStorage.removeItem(KEY);
+      try {
+        localStorage.removeItem(KEY);
+      } catch {
+      }
+      sharedApi.GM_deleteValue?.(KEY);
       window.dispatchEvent(new Event("kattappa:update"));
     },
     key: KEY
@@ -23923,34 +23957,6 @@ var Kattappa = (() => {
     setNodes(config.peSelectors, bias !== "PE", config.gateMode);
   }
 
-  // src/modules/protection/index.ts
-  function clickOnce(selector, marker) {
-    const node = document.querySelector(selector);
-    if (!node || node.dataset[marker]) return false;
-    node.dataset[marker] = "true";
-    node.click();
-    return true;
-  }
-  function poll(state, config) {
-    const capital = readNumber(config.balanceSelector) ?? state.capital;
-    const dayPnl = readNumber(config.dayPnlSelector);
-    const openTradePnl = readNumber(config.openTradePnlSelector);
-    storage.write({ capital: capital ?? void 0, dayPnl, openTradePnl });
-    if (!capital || dayPnl == null) return;
-    const dayPercent = dayPnl / capital * 100;
-    const reason = dayPercent >= config.profitKillPercent ? `Day profit reached ${dayPercent.toFixed(2)}%` : dayPercent <= -config.lossKillPercent ? `Day loss reached ${dayPercent.toFixed(2)}%` : null;
-    if (reason && config.killSwitchEnabled && !state.killTriggered) {
-      storage.write({ killTriggered: { reason, at: Date.now() } });
-      if (config.killSwitchUrl && location.href !== config.killSwitchUrl) window.open(config.killSwitchUrl, "_blank", "noopener");
-    }
-    if (state.killTriggered && config.killSwitchEnabled && config.killSwitchToggleSelector) clickOnce(config.killSwitchToggleSelector, "kattappaKillClicked");
-    if (openTradePnl != null && openTradePnl < 0 && Math.abs(openTradePnl / capital * 100) >= config.tradeLossPercent) {
-      const alert2 = { percent: Math.abs(openTradePnl / capital * 100), at: Date.now() };
-      storage.write({ tradeLossAlert: alert2 });
-      if (config.automaticTradeCloseEnabled && config.closeTradeSelector) clickOnce(config.closeTradeSelector, "kattappaCloseClicked");
-    }
-  }
-
   // src/App.tsx
   var import_jsx_runtime = __toESM(require_jsx_runtime(), 1);
   var format = (n) => n == null ? "\u2014" : new Intl.NumberFormat(void 0, { maximumFractionDigits: 2 }).format(n);
@@ -24002,10 +24008,6 @@ var Kattappa = (() => {
     }, [isOpen]);
     (0, import_react.useEffect)(() => {
       applyDirectionGate(state.bias ?? "LOCKED", config);
-      const run = () => poll(storage.read(), config);
-      run();
-      const timer = window.setInterval(run, Math.max(1, config.pollingSeconds) * 1e3);
-      return () => window.clearInterval(timer);
     }, [configKey, state.bias]);
     function chooseAnswer(value) {
       if (phase !== "idle") return;
@@ -24163,7 +24165,7 @@ var Kattappa = (() => {
       ] }),
       /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "actions", children: [
         /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", { className: "secondary", onClick: () => storage.write({ bias: "LOCKED" }), children: "Lock both sides" }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", { className: "secondary", onClick: () => poll(storage.read(), config), children: "Refresh values" }),
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", { className: "secondary", onClick: () => setState(storage.read()), children: "Refresh values" }),
         /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", { className: "secondary", onClick: () => {
           setSettingsText(JSON.stringify(config, null, 2));
           setShowSettings(!showSettings);
@@ -24194,11 +24196,59 @@ var Kattappa = (() => {
   // src/styles.css
   var styles_default = '#kattappa-root { position:fixed; right:18px; top:100px; z-index:2147483647; width:400px; height:auto; min-width:400px; min-height:400px; max-width:100vw; max-height:100vh; color:#eaf0ff; font:13px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }\n#kattappa-root.kattappa-collapsed { left:auto!important; right:0!important; top:50%!important; width:auto!important; height:auto!important; min-width:0!important; min-height:0!important; transform:translateY(-50%); }\n.load-kattappa { display:block; border-radius:9px 0 0 9px; padding:12px 10px; background:#2563eb; box-shadow:0 8px 24px #0008; }\n.kattappa-card { position:relative; display:flex; flex-direction:column; width:100%; min-height:400px; height:100%; background:#101827; border:1px solid #334155; border-radius:12px; box-shadow:0 18px 50px #0008; overflow:auto; animation:kattappa-slide-in .24s ease-out both; }\n.kattappa-card header { display:flex; flex:0 0 auto; justify-content:space-between; padding:11px 13px; background:#172235; cursor:grab; touch-action:none; }\n.close-kattappa { margin:-5px -5px -5px 5px; padding:3px 8px; background:transparent; color:#9fb0c9; font-size:20px; line-height:1; }\n.kattappa-card header:active,.drag-boundary:active { cursor:grabbing; }\n.kattappa-card header span,.kattappa-card small,.kattappa-card footer { color:#9fb0c9; }\n.stats { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; padding:12px; }\n.stat { min-width:0; background:#172235; border-radius:8px; padding:8px; }.stat small,.stat b { display:block; overflow:hidden; text-overflow:ellipsis; }.stat b { font-size:16px; }\n.good { color:#5eead4; }.bad { color:#fda4af; }.warn { color:#fcd34d; }\n.notice { flex:0 0 auto; margin:0 12px 10px; padding:8px; border-radius:7px; background:#172235; }\n.questionnaire { flex:0 0 auto; margin:0 12px; border:1px solid #334155; border-radius:9px; background:#0d1728; overflow:hidden; }\n.progress { display:flex; justify-content:space-between; padding:9px 10px; border-bottom:1px solid #334155; color:#9fb0c9; }\n.question-stage { min-height:116px; padding-top:1px; }.question-stage.leaving-forward { animation:kattappa-out-left .19s ease-in forwards; }.question-stage.entering-forward { animation:kattappa-in-right .22s ease-out both; }.question-stage.leaving-back { animation:kattappa-out-right .19s ease-in forwards; }.question-stage.entering-back { animation:kattappa-in-left .22s ease-out both; }\n.question { display:block; margin:12px; font-weight:600; }.question select,textarea { box-sizing:border-box; width:100%; margin-top:8px; padding:8px; background:#0b1220; color:#eaf0ff; border:1px solid #40516b; border-radius:6px; }\n.question-nav,.question-nav-left { display:flex; align-items:center; gap:7px; }.question-nav { justify-content:space-between; padding:0 12px 12px; color:#9fb0c9; font-size:11px; }.reset-icon { min-width:31px; font-size:17px; line-height:1; padding:6px 8px; }\n.actions { display:flex; gap:7px; flex-wrap:wrap; margin:12px; }button { background:#2563eb; color:white; border:0; border-radius:7px; padding:7px 9px; cursor:pointer; }button:disabled { cursor:not-allowed; opacity:.45; }.secondary { background:#334155; }.danger { background:#b91c1c; }\n.score { flex:0 0 auto; margin:12px; padding:8px; border-radius:7px; background:#172235; }.settings { flex:0 0 auto; margin:12px; }.settings textarea { height:200px; font:11px ui-monospace,monospace; margin-bottom:8px; }.kattappa-card footer { margin:0 12px 12px; font-size:11px; }\n.kattappa-blocked { filter:blur(5px)!important; pointer-events:none!important; user-select:none!important; opacity:.38!important; }\n/* A 20px band inside each side moves the popup. The outer edge remains for resize. */\n.drag-boundary { position:absolute; z-index:1; touch-action:none; cursor:grab; }.drag-boundary.n,.drag-boundary.s { left:20px; right:20px; height:20px; }.drag-boundary.n { top:0; }.drag-boundary.s { bottom:0; }.drag-boundary.e,.drag-boundary.w { top:20px; bottom:20px; width:20px; }.drag-boundary.e { right:0; }.drag-boundary.w { left:0; }\n.resize-handle { position:absolute; z-index:2; touch-action:none; }.resize-handle.n,.resize-handle.s { left:10px; right:10px; height:10px; cursor:ns-resize; }.resize-handle.n { top:-5px; }.resize-handle.s { bottom:-5px; }.resize-handle.e,.resize-handle.w { top:10px; bottom:10px; width:10px; cursor:ew-resize; }.resize-handle.e { right:-5px; }.resize-handle.w { left:-5px; }.resize-handle.ne,.resize-handle.nw,.resize-handle.se,.resize-handle.sw { width:14px; height:14px; }.resize-handle.ne { right:-7px; top:-7px; cursor:nesw-resize; }.resize-handle.nw { left:-7px; top:-7px; cursor:nwse-resize; }.resize-handle.se { right:-7px; bottom:-7px; cursor:nwse-resize; }.resize-handle.sw { left:-7px; bottom:-7px; cursor:nesw-resize; }\n@keyframes kattappa-out-left { to { transform:translateX(-110%); opacity:0; } }@keyframes kattappa-in-right { from { transform:translateX(110%); opacity:0; } to { transform:translateX(0); opacity:1; } }@keyframes kattappa-out-right { to { transform:translateX(110%); opacity:0; } }@keyframes kattappa-in-left { from { transform:translateX(-110%); opacity:0; } to { transform:translateX(0); opacity:1; } }\n@keyframes kattappa-slide-in { from { transform:translateX(28px); opacity:0; } to { transform:translateX(0); opacity:1; } }\n';
 
+  // src/modules/protection/index.ts
+  function clickOnce(selector, marker) {
+    const node = document.querySelector(selector);
+    if (!node || node.dataset[marker]) return false;
+    node.dataset[marker] = "true";
+    node.click();
+    return true;
+  }
+  function poll(state, config) {
+    const capital = readNumber(config.balanceSelector) ?? state.capital;
+    const dayPnl = readNumber(config.dayPnlSelector);
+    const openTradePnl = readNumber(config.openTradePnlSelector);
+    storage.write({ capital: capital ?? void 0, dayPnl, openTradePnl });
+    if (!capital || dayPnl == null) return;
+    const dayPercent = dayPnl / capital * 100;
+    const reason = dayPercent >= config.profitKillPercent ? `Day profit reached ${dayPercent.toFixed(2)}%` : dayPercent <= -config.lossKillPercent ? `Day loss reached ${dayPercent.toFixed(2)}%` : null;
+    if (reason && config.killSwitchEnabled && !state.killTriggered) {
+      storage.write({ killTriggered: { reason, at: Date.now() } });
+      if (config.killSwitchUrl && location.href !== config.killSwitchUrl) {
+        const openInTab = globalThis.GM_openInTab;
+        if (typeof openInTab === "function") openInTab(config.killSwitchUrl, { active: true, insert: true });
+        else window.open(config.killSwitchUrl, "_blank", "noopener");
+      }
+    }
+    if (state.killTriggered && config.killSwitchEnabled && config.killSwitchToggleSelector) clickOnce(config.killSwitchToggleSelector, "kattappaKillClicked");
+    if (openTradePnl != null && openTradePnl < 0 && Math.abs(openTradePnl / capital * 100) >= config.tradeLossPercent) {
+      const alert2 = { percent: Math.abs(openTradePnl / capital * 100), at: Date.now() };
+      storage.write({ tradeLossAlert: alert2 });
+      if (config.automaticTradeCloseEnabled && config.closeTradeSelector) clickOnce(config.closeTradeSelector, "kattappaCloseClicked");
+    }
+  }
+
+  // src/modules/runtime/index.ts
+  var timer = null;
+  function startGrowwBackgroundRuntime() {
+    const isLocalPreview = location.hostname === "localhost" || location.hostname === "127.0.0.1";
+    if (location.hostname !== "groww.in" && !isLocalPreview || timer !== null) return;
+    const run = () => {
+      const state = storage.read();
+      const config = { ...defaultConfig, ...state.config };
+      poll(state, config);
+      timer = window.setTimeout(run, Math.max(1, config.pollingSeconds) * 1e3);
+    };
+    run();
+  }
+
   // src/main.tsx
   var import_jsx_runtime2 = __toESM(require_jsx_runtime(), 1);
   var styleId = "kattappa-styles";
   var rootId = "kattappa-root";
   var reactRoot = null;
+  storage.connect();
+  startGrowwBackgroundRuntime();
   function isGrowwTerminal() {
     const isLocalPreview = location.hostname === "localhost" || location.hostname === "127.0.0.1";
     return isLocalPreview || location.hostname === "915.groww.in" && location.pathname.startsWith("/terminal");
