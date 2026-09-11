@@ -24015,6 +24015,14 @@ var Kattappa = (() => {
   }
 
   // src/modules/dom/index.ts
+  var GATE_STYLE_ID = "kattappa-direction-gate-style";
+  var GATE_HIDDEN_CLASS = "kattappa-direction-gate-hidden";
+  var GATE_MANAGED_ATTRIBUTE = "data-kattappa-direction-gate";
+  var sideButtonSelector = (side) => `button[data-test-id$="${side}"]`;
+  var gateObserver = null;
+  var currentBias = "LOCKED";
+  var currentConfig = null;
+  var gateRefreshQueued = false;
   var suffixMultipliers = {
     k: 1e3,
     m: 1e6,
@@ -24074,9 +24082,98 @@ var Kattappa = (() => {
       }
     }));
   }
+  function ensureGateStyle() {
+    if (document.getElementById(GATE_STYLE_ID)) return;
+    const style = document.createElement("style");
+    style.id = GATE_STYLE_ID;
+    style.textContent = `.${GATE_HIDDEN_CLASS}{display:none!important;pointer-events:none!important;user-select:none!important;}`;
+    (document.head ?? document.documentElement).append(style);
+  }
+  function clearSemanticGate() {
+    document.querySelectorAll(`[${GATE_MANAGED_ATTRIBUTE}]`).forEach((node) => {
+      node.classList.remove(GATE_HIDDEN_CLASS);
+      node.removeAttribute(GATE_MANAGED_ATTRIBUTE);
+    });
+  }
+  function findSideCards(side) {
+    const cards = /* @__PURE__ */ new Set();
+    document.querySelectorAll(sideButtonSelector(side)).forEach((button) => {
+      const card = button.closest(".group");
+      if (card) cards.add(card);
+    });
+    return [...cards];
+  }
+  function findActionSections(ceCards, peCards) {
+    const sections = /* @__PURE__ */ new Set();
+    ceCards.forEach((ceCard) => {
+      let ancestor = ceCard.parentElement;
+      while (ancestor && ancestor !== document.body && !peCards.some((peCard) => ancestor.contains(peCard))) {
+        ancestor = ancestor.parentElement;
+      }
+      if (ancestor && ancestor !== document.body && ancestor !== document.documentElement) sections.add(ancestor);
+    });
+    return [...sections];
+  }
+  function hideNodes(nodes, reason) {
+    nodes.forEach((node) => {
+      node.setAttribute(GATE_MANAGED_ATTRIBUTE, reason);
+      node.classList.add(GATE_HIDDEN_CLASS);
+    });
+  }
+  function applySemanticDirectionGate(bias) {
+    ensureGateStyle();
+    clearSemanticGate();
+    const ceCards = findSideCards("CE");
+    const peCards = findSideCards("PE");
+    if (bias === "CE") {
+      hideNodes(peCards, "PE");
+      return;
+    }
+    if (bias === "PE") {
+      hideNodes(ceCards, "CE");
+      return;
+    }
+    const sections = findActionSections(ceCards, peCards);
+    if (sections.length) hideNodes(sections, "section");
+    else {
+      hideNodes(ceCards, "CE");
+      hideNodes(peCards, "PE");
+    }
+  }
+  function applyCurrentDirectionGate() {
+    if (!currentConfig) return;
+    applySemanticDirectionGate(currentBias);
+    setNodes(currentConfig.ceSelectors, currentBias !== "CE", currentConfig.gateMode);
+    setNodes(currentConfig.peSelectors, currentBias !== "PE", currentConfig.gateMode);
+  }
+  function ensureGateObserver() {
+    if (gateObserver || !document.documentElement) return;
+    gateObserver = new MutationObserver(() => {
+      if (gateRefreshQueued) return;
+      gateRefreshQueued = true;
+      window.setTimeout(() => {
+        gateRefreshQueued = false;
+        applyCurrentDirectionGate();
+      }, 0);
+    });
+    gateObserver.observe(document.documentElement, { childList: true, subtree: true });
+  }
   function applyDirectionGate(bias, config) {
-    setNodes(config.ceSelectors, bias !== "CE", config.gateMode);
-    setNodes(config.peSelectors, bias !== "PE", config.gateMode);
+    currentBias = bias;
+    currentConfig = config;
+    applyCurrentDirectionGate();
+    ensureGateObserver();
+  }
+  function clearDirectionGate() {
+    gateObserver?.disconnect();
+    gateObserver = null;
+    gateRefreshQueued = false;
+    clearSemanticGate();
+    if (currentConfig) {
+      setNodes(currentConfig.ceSelectors, false, currentConfig.gateMode);
+      setNodes(currentConfig.peSelectors, false, currentConfig.gateMode);
+    }
+    currentConfig = null;
   }
 
   // src/App.tsx
@@ -24475,6 +24572,7 @@ var Kattappa = (() => {
   }
   function unmountKattappa() {
     if (isGrowwTerminal()) return;
+    clearDirectionGate();
     reactRoot?.unmount();
     reactRoot = null;
     document.getElementById(rootId)?.remove();

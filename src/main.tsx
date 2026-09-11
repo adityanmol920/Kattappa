@@ -4,6 +4,7 @@ import styles from './styles.css';
 import { storage } from './modules/storage';
 import { startGrowwBackgroundRuntime } from './modules/runtime';
 import { startPnlRuntime } from './modules/pnl';
+import { clearDirectionGate } from './modules/dom';
 
 const rootId = 'kattappa-root';
 const appId = 'kattappa-app';
@@ -46,6 +47,7 @@ function mountKattappa() {
 
 function unmountKattappa() {
   if (isGrowwTerminal()) return;
+  clearDirectionGate();
   reactRoot?.unmount();
   reactRoot = null;
   document.getElementById(rootId)?.remove();

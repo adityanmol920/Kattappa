@@ -28,6 +28,7 @@ This generates `dist/bundle.js`. Release tags must include that generated file b
 - Re-entering the terminal starts a fresh questionnaire. The previous analysis is archived locally for a future explicit restore feature, but it is never restored automatically.
 - Popup open state, position, and size are also kept per tab.
 - Capital, P&L, settings, and risk-management alerts remain in shared Tampermonkey storage so they are available across Groww domains and tabs.
+- On the 915 terminal, an unclear/locked direction hides the complete CE/PE action section. A CE direction hides the PE action card, while a PE direction hides the CE action card. Kattappa adds CSS classes only; Groww's nodes remain in the DOM.
 
 ## Tampermonkey installation
 

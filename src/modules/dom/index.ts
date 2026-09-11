@@ -1,5 +1,14 @@
 import type { Bias, Config } from '../../types';
 
+const GATE_STYLE_ID = 'kattappa-direction-gate-style';
+const GATE_HIDDEN_CLASS = 'kattappa-direction-gate-hidden';
+const GATE_MANAGED_ATTRIBUTE = 'data-kattappa-direction-gate';
+const sideButtonSelector = (side: 'CE' | 'PE') => `button[data-test-id$="${side}"]`;
+let gateObserver: MutationObserver | null = null;
+let currentBias: Bias = 'LOCKED';
+let currentConfig: Config | null = null;
+let gateRefreshQueued = false;
+
 const suffixMultipliers: Record<string, number> = {
   k: 1_000,
   m: 1_000_000,
@@ -63,7 +72,110 @@ function setNodes(selectors: string[], blocked: boolean, mode: Config['gateMode'
     }
   }));
 }
+
+function ensureGateStyle() {
+  if (document.getElementById(GATE_STYLE_ID)) return;
+  const style = document.createElement('style');
+  style.id = GATE_STYLE_ID;
+  style.textContent = `.${GATE_HIDDEN_CLASS}{display:none!important;pointer-events:none!important;user-select:none!important;}`;
+  (document.head ?? document.documentElement).append(style);
+}
+
+function clearSemanticGate() {
+  document.querySelectorAll<HTMLElement>(`[${GATE_MANAGED_ATTRIBUTE}]`).forEach(node => {
+    node.classList.remove(GATE_HIDDEN_CLASS);
+    node.removeAttribute(GATE_MANAGED_ATTRIBUTE);
+  });
+}
+
+function findSideCards(side: 'CE' | 'PE') {
+  const cards = new Set<HTMLElement>();
+  document.querySelectorAll<HTMLElement>(sideButtonSelector(side)).forEach(button => {
+    const card = button.closest<HTMLElement>('.group');
+    if (card) cards.add(card);
+  });
+  return [...cards];
+}
+
+function findActionSections(ceCards: HTMLElement[], peCards: HTMLElement[]) {
+  const sections = new Set<HTMLElement>();
+  ceCards.forEach(ceCard => {
+    let ancestor = ceCard.parentElement;
+    while (ancestor && ancestor !== document.body && !peCards.some(peCard => ancestor!.contains(peCard))) {
+      ancestor = ancestor.parentElement;
+    }
+    if (ancestor && ancestor !== document.body && ancestor !== document.documentElement) sections.add(ancestor);
+  });
+  return [...sections];
+}
+
+function hideNodes(nodes: HTMLElement[], reason: 'section' | 'CE' | 'PE') {
+  nodes.forEach(node => {
+    node.setAttribute(GATE_MANAGED_ATTRIBUTE, reason);
+    node.classList.add(GATE_HIDDEN_CLASS);
+  });
+}
+
+function applySemanticDirectionGate(bias: Bias) {
+  ensureGateStyle();
+  clearSemanticGate();
+  const ceCards = findSideCards('CE');
+  const peCards = findSideCards('PE');
+
+  if (bias === 'CE') {
+    hideNodes(peCards, 'PE');
+    return;
+  }
+  if (bias === 'PE') {
+    hideNodes(ceCards, 'CE');
+    return;
+  }
+
+  const sections = findActionSections(ceCards, peCards);
+  // Fail closed if Groww temporarily renders only one side: the available trade
+  // card is still hidden until both sides and their common section are present.
+  if (sections.length) hideNodes(sections, 'section');
+  else {
+    hideNodes(ceCards, 'CE');
+    hideNodes(peCards, 'PE');
+  }
+}
+
+function applyCurrentDirectionGate() {
+  if (!currentConfig) return;
+  applySemanticDirectionGate(currentBias);
+  setNodes(currentConfig.ceSelectors, currentBias !== 'CE', currentConfig.gateMode);
+  setNodes(currentConfig.peSelectors, currentBias !== 'PE', currentConfig.gateMode);
+}
+
+function ensureGateObserver() {
+  if (gateObserver || !document.documentElement) return;
+  gateObserver = new MutationObserver(() => {
+    if (gateRefreshQueued) return;
+    gateRefreshQueued = true;
+    window.setTimeout(() => {
+      gateRefreshQueued = false;
+      applyCurrentDirectionGate();
+    }, 0);
+  });
+  gateObserver.observe(document.documentElement, { childList: true, subtree: true });
+}
+
 export function applyDirectionGate(bias: Bias, config: Config) {
-  setNodes(config.ceSelectors, bias !== 'CE', config.gateMode);
-  setNodes(config.peSelectors, bias !== 'PE', config.gateMode);
+  currentBias = bias;
+  currentConfig = config;
+  applyCurrentDirectionGate();
+  ensureGateObserver();
+}
+
+export function clearDirectionGate() {
+  gateObserver?.disconnect();
+  gateObserver = null;
+  gateRefreshQueued = false;
+  clearSemanticGate();
+  if (currentConfig) {
+    setNodes(currentConfig.ceSelectors, false, currentConfig.gateMode);
+    setNodes(currentConfig.peSelectors, false, currentConfig.gateMode);
+  }
+  currentConfig = null;
 }
