@@ -4,8 +4,9 @@ import styles from './styles.css';
 import { storage } from './modules/storage';
 import { startGrowwBackgroundRuntime } from './modules/runtime';
 
-const styleId = 'kattappa-styles';
 const rootId = 'kattappa-root';
+const appId = 'kattappa-app';
+const mountDelayMs = 1500;
 let reactRoot: Root | null = null;
 
 storage.connect();
@@ -17,17 +18,26 @@ function isGrowwTerminal() {
 }
 
 function mountKattappa() {
-  if (reactRoot || !isGrowwTerminal() || !document.body) return;
-  if (!document.getElementById(styleId)) {
-    const style = document.createElement('style');
-    style.id = styleId;
-    style.textContent = styles;
-    document.head.append(style);
-  }
-  const container = document.createElement('div');
-  container.id = rootId;
-  document.body.append(container);
-  reactRoot = createRoot(container);
+  if (!isGrowwTerminal() || !document.body) return;
+  const existingHost = document.getElementById(rootId);
+  if (reactRoot && existingHost?.isConnected) return;
+
+  // Groww may replace the DOM after its chart initializes. Dispose any detached
+  // React tree and build a fresh isolated host when that happens.
+  reactRoot?.unmount();
+  reactRoot = null;
+  existingHost?.remove();
+
+  const host = document.createElement('div');
+  host.id = rootId;
+  const shadow = host.attachShadow({ mode: 'open' });
+  const style = document.createElement('style');
+  style.textContent = styles;
+  const app = document.createElement('div');
+  app.id = appId;
+  shadow.append(style, app);
+  document.body.append(host);
+  reactRoot = createRoot(app);
   reactRoot.render(<App />);
 }
 
@@ -36,16 +46,21 @@ function unmountKattappa() {
   reactRoot?.unmount();
   reactRoot = null;
   document.getElementById(rootId)?.remove();
-  document.getElementById(styleId)?.remove();
 }
 
 function syncKattappaRoute() {
   if (isGrowwTerminal()) mountKattappa(); else unmountKattappa();
 }
 
-// Groww changes routes without a full page load. Watching the current URL keeps
-// Kattappa absent outside the terminal; localhost remains available for the demo.
-syncKattappaRoute();
-window.addEventListener('popstate', syncKattappaRoute);
-window.addEventListener('hashchange', syncKattappaRoute);
-window.setInterval(syncKattappaRoute, 500);
+function startUiRuntime() {
+  // Give the Groww chart time to finish its initial DOM replacement before the
+  // first mount. The interval also restores Kattappa if a later layout change
+  // removes its host and handles SPA route changes without a full page reload.
+  window.setTimeout(syncKattappaRoute, mountDelayMs);
+  window.addEventListener('popstate', syncKattappaRoute);
+  window.addEventListener('hashchange', syncKattappaRoute);
+  window.setInterval(syncKattappaRoute, 750);
+}
+
+if (document.readyState === 'complete') startUiRuntime();
+else window.addEventListener('load', startUiRuntime, { once: true });

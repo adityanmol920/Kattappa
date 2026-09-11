@@ -7,9 +7,31 @@ export const readNumber = (selector: string) => {
 };
 function setNodes(selectors: string[], blocked: boolean, mode: Config['gateMode']) {
   selectors.forEach(selector => document.querySelectorAll<HTMLElement>(selector).forEach(node => {
-    if (mode === 'hide') node.style.display = blocked ? 'none' : '';
-    node.classList.toggle('kattappa-blocked', blocked && mode === 'blur');
-    node.toggleAttribute('aria-disabled', blocked);
+    if (node.dataset.kattappaStyleCaptured !== 'true') {
+      node.dataset.kattappaStyleCaptured = 'true';
+      node.dataset.kattappaDisplay = node.style.display;
+      node.dataset.kattappaFilter = node.style.filter;
+      node.dataset.kattappaPointerEvents = node.style.pointerEvents;
+      node.dataset.kattappaUserSelect = node.style.userSelect;
+      node.dataset.kattappaOpacity = node.style.opacity;
+      node.dataset.kattappaAriaDisabled = node.getAttribute('aria-disabled') ?? '__absent__';
+    }
+    node.style.display = node.dataset.kattappaDisplay ?? '';
+    node.style.filter = node.dataset.kattappaFilter ?? '';
+    node.style.pointerEvents = node.dataset.kattappaPointerEvents ?? '';
+    node.style.userSelect = node.dataset.kattappaUserSelect ?? '';
+    node.style.opacity = node.dataset.kattappaOpacity ?? '';
+    if (node.dataset.kattappaAriaDisabled === '__absent__') node.removeAttribute('aria-disabled');
+    else node.setAttribute('aria-disabled', node.dataset.kattappaAriaDisabled ?? 'false');
+    if (!blocked) return;
+    node.setAttribute('aria-disabled', 'true');
+    if (mode === 'hide') node.style.display = 'none';
+    else {
+      node.style.filter = 'blur(5px)';
+      node.style.pointerEvents = 'none';
+      node.style.userSelect = 'none';
+      node.style.opacity = '0.38';
+    }
   }));
 }
 export function applyDirectionGate(bias: Bias, config: Config) {

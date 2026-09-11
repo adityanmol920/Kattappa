@@ -23947,9 +23947,31 @@ var Kattappa = (() => {
   };
   function setNodes(selectors, blocked, mode) {
     selectors.forEach((selector) => document.querySelectorAll(selector).forEach((node) => {
-      if (mode === "hide") node.style.display = blocked ? "none" : "";
-      node.classList.toggle("kattappa-blocked", blocked && mode === "blur");
-      node.toggleAttribute("aria-disabled", blocked);
+      if (node.dataset.kattappaStyleCaptured !== "true") {
+        node.dataset.kattappaStyleCaptured = "true";
+        node.dataset.kattappaDisplay = node.style.display;
+        node.dataset.kattappaFilter = node.style.filter;
+        node.dataset.kattappaPointerEvents = node.style.pointerEvents;
+        node.dataset.kattappaUserSelect = node.style.userSelect;
+        node.dataset.kattappaOpacity = node.style.opacity;
+        node.dataset.kattappaAriaDisabled = node.getAttribute("aria-disabled") ?? "__absent__";
+      }
+      node.style.display = node.dataset.kattappaDisplay ?? "";
+      node.style.filter = node.dataset.kattappaFilter ?? "";
+      node.style.pointerEvents = node.dataset.kattappaPointerEvents ?? "";
+      node.style.userSelect = node.dataset.kattappaUserSelect ?? "";
+      node.style.opacity = node.dataset.kattappaOpacity ?? "";
+      if (node.dataset.kattappaAriaDisabled === "__absent__") node.removeAttribute("aria-disabled");
+      else node.setAttribute("aria-disabled", node.dataset.kattappaAriaDisabled ?? "false");
+      if (!blocked) return;
+      node.setAttribute("aria-disabled", "true");
+      if (mode === "hide") node.style.display = "none";
+      else {
+        node.style.filter = "blur(5px)";
+        node.style.pointerEvents = "none";
+        node.style.userSelect = "none";
+        node.style.opacity = "0.38";
+      }
     }));
   }
   function applyDirectionGate(bias, config) {
@@ -24075,7 +24097,7 @@ var Kattappa = (() => {
       event.preventDefault();
       event.stopPropagation();
       const rect = root.getBoundingClientRect();
-      const card = root.querySelector(".kattappa-card");
+      const card = root.shadowRoot?.querySelector(".kattappa-card");
       const previousHeight = card?.style.height ?? "";
       if (card) card.style.height = "auto";
       const maximumContentHeight = Math.max(400, card?.scrollHeight ?? 400);
@@ -24194,7 +24216,7 @@ var Kattappa = (() => {
   }
 
   // src/styles.css
-  var styles_default = '#kattappa-root { position:fixed; right:18px; top:100px; z-index:2147483647; width:400px; height:auto; min-width:400px; min-height:400px; max-width:100vw; max-height:100vh; color:#eaf0ff; font:13px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }\n#kattappa-root.kattappa-collapsed { left:auto!important; right:0!important; top:50%!important; width:auto!important; height:auto!important; min-width:0!important; min-height:0!important; transform:translateY(-50%); }\n.load-kattappa { display:block; border-radius:9px 0 0 9px; padding:12px 10px; background:#2563eb; box-shadow:0 8px 24px #0008; }\n.kattappa-card { position:relative; display:flex; flex-direction:column; width:100%; min-height:400px; height:100%; background:#101827; border:1px solid #334155; border-radius:12px; box-shadow:0 18px 50px #0008; overflow:auto; animation:kattappa-slide-in .24s ease-out both; }\n.kattappa-card header { display:flex; flex:0 0 auto; justify-content:space-between; padding:11px 13px; background:#172235; cursor:grab; touch-action:none; }\n.close-kattappa { margin:-5px -5px -5px 5px; padding:3px 8px; background:transparent; color:#9fb0c9; font-size:20px; line-height:1; }\n.kattappa-card header:active,.drag-boundary:active { cursor:grabbing; }\n.kattappa-card header span,.kattappa-card small,.kattappa-card footer { color:#9fb0c9; }\n.stats { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; padding:12px; }\n.stat { min-width:0; background:#172235; border-radius:8px; padding:8px; }.stat small,.stat b { display:block; overflow:hidden; text-overflow:ellipsis; }.stat b { font-size:16px; }\n.good { color:#5eead4; }.bad { color:#fda4af; }.warn { color:#fcd34d; }\n.notice { flex:0 0 auto; margin:0 12px 10px; padding:8px; border-radius:7px; background:#172235; }\n.questionnaire { flex:0 0 auto; margin:0 12px; border:1px solid #334155; border-radius:9px; background:#0d1728; overflow:hidden; }\n.progress { display:flex; justify-content:space-between; padding:9px 10px; border-bottom:1px solid #334155; color:#9fb0c9; }\n.question-stage { min-height:116px; padding-top:1px; }.question-stage.leaving-forward { animation:kattappa-out-left .19s ease-in forwards; }.question-stage.entering-forward { animation:kattappa-in-right .22s ease-out both; }.question-stage.leaving-back { animation:kattappa-out-right .19s ease-in forwards; }.question-stage.entering-back { animation:kattappa-in-left .22s ease-out both; }\n.question { display:block; margin:12px; font-weight:600; }.question select,textarea { box-sizing:border-box; width:100%; margin-top:8px; padding:8px; background:#0b1220; color:#eaf0ff; border:1px solid #40516b; border-radius:6px; }\n.question-nav,.question-nav-left { display:flex; align-items:center; gap:7px; }.question-nav { justify-content:space-between; padding:0 12px 12px; color:#9fb0c9; font-size:11px; }.reset-icon { min-width:31px; font-size:17px; line-height:1; padding:6px 8px; }\n.actions { display:flex; gap:7px; flex-wrap:wrap; margin:12px; }button { background:#2563eb; color:white; border:0; border-radius:7px; padding:7px 9px; cursor:pointer; }button:disabled { cursor:not-allowed; opacity:.45; }.secondary { background:#334155; }.danger { background:#b91c1c; }\n.score { flex:0 0 auto; margin:12px; padding:8px; border-radius:7px; background:#172235; }.settings { flex:0 0 auto; margin:12px; }.settings textarea { height:200px; font:11px ui-monospace,monospace; margin-bottom:8px; }.kattappa-card footer { margin:0 12px 12px; font-size:11px; }\n.kattappa-blocked { filter:blur(5px)!important; pointer-events:none!important; user-select:none!important; opacity:.38!important; }\n/* A 20px band inside each side moves the popup. The outer edge remains for resize. */\n.drag-boundary { position:absolute; z-index:1; touch-action:none; cursor:grab; }.drag-boundary.n,.drag-boundary.s { left:20px; right:20px; height:20px; }.drag-boundary.n { top:0; }.drag-boundary.s { bottom:0; }.drag-boundary.e,.drag-boundary.w { top:20px; bottom:20px; width:20px; }.drag-boundary.e { right:0; }.drag-boundary.w { left:0; }\n.resize-handle { position:absolute; z-index:2; touch-action:none; }.resize-handle.n,.resize-handle.s { left:10px; right:10px; height:10px; cursor:ns-resize; }.resize-handle.n { top:-5px; }.resize-handle.s { bottom:-5px; }.resize-handle.e,.resize-handle.w { top:10px; bottom:10px; width:10px; cursor:ew-resize; }.resize-handle.e { right:-5px; }.resize-handle.w { left:-5px; }.resize-handle.ne,.resize-handle.nw,.resize-handle.se,.resize-handle.sw { width:14px; height:14px; }.resize-handle.ne { right:-7px; top:-7px; cursor:nesw-resize; }.resize-handle.nw { left:-7px; top:-7px; cursor:nwse-resize; }.resize-handle.se { right:-7px; bottom:-7px; cursor:nwse-resize; }.resize-handle.sw { left:-7px; bottom:-7px; cursor:nesw-resize; }\n@keyframes kattappa-out-left { to { transform:translateX(-110%); opacity:0; } }@keyframes kattappa-in-right { from { transform:translateX(110%); opacity:0; } to { transform:translateX(0); opacity:1; } }@keyframes kattappa-out-right { to { transform:translateX(110%); opacity:0; } }@keyframes kattappa-in-left { from { transform:translateX(-110%); opacity:0; } to { transform:translateX(0); opacity:1; } }\n@keyframes kattappa-slide-in { from { transform:translateX(28px); opacity:0; } to { transform:translateX(0); opacity:1; } }\n';
+  var styles_default = ':host { position:fixed; right:18px; top:100px; z-index:2147483647; width:400px; height:auto; min-width:400px; min-height:400px; max-width:100vw; max-height:100vh; color:#eaf0ff; font:13px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }\n:host(.kattappa-collapsed) { left:auto!important; right:0!important; top:50%!important; width:auto!important; height:auto!important; min-width:0!important; min-height:0!important; transform:translateY(-50%); }\n.load-kattappa { display:block; border-radius:9px 0 0 9px; padding:12px 10px; background:#2563eb; box-shadow:0 8px 24px #0008; }\n.kattappa-card { position:relative; display:flex; flex-direction:column; width:100%; min-height:400px; height:100%; background:#101827; border:1px solid #334155; border-radius:12px; box-shadow:0 18px 50px #0008; overflow:auto; animation:kattappa-slide-in .24s ease-out both; }\n.kattappa-card header { display:flex; flex:0 0 auto; justify-content:space-between; padding:11px 13px; background:#172235; cursor:grab; touch-action:none; }\n.close-kattappa { margin:-5px -5px -5px 5px; padding:3px 8px; background:transparent; color:#9fb0c9; font-size:20px; line-height:1; }\n.kattappa-card header:active,.drag-boundary:active { cursor:grabbing; }\n.kattappa-card header span,.kattappa-card small,.kattappa-card footer { color:#9fb0c9; }\n.stats { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; padding:12px; }\n.stat { min-width:0; background:#172235; border-radius:8px; padding:8px; }.stat small,.stat b { display:block; overflow:hidden; text-overflow:ellipsis; }.stat b { font-size:16px; }\n.good { color:#5eead4; }.bad { color:#fda4af; }.warn { color:#fcd34d; }\n.notice { flex:0 0 auto; margin:0 12px 10px; padding:8px; border-radius:7px; background:#172235; }\n.questionnaire { flex:0 0 auto; margin:0 12px; border:1px solid #334155; border-radius:9px; background:#0d1728; overflow:hidden; }\n.progress { display:flex; justify-content:space-between; padding:9px 10px; border-bottom:1px solid #334155; color:#9fb0c9; }\n.question-stage { min-height:116px; padding-top:1px; }.question-stage.leaving-forward { animation:kattappa-out-left .19s ease-in forwards; }.question-stage.entering-forward { animation:kattappa-in-right .22s ease-out both; }.question-stage.leaving-back { animation:kattappa-out-right .19s ease-in forwards; }.question-stage.entering-back { animation:kattappa-in-left .22s ease-out both; }\n.question { display:block; margin:12px; font-weight:600; }.question select,textarea { box-sizing:border-box; width:100%; margin-top:8px; padding:8px; background:#0b1220; color:#eaf0ff; border:1px solid #40516b; border-radius:6px; }\n.question-nav,.question-nav-left { display:flex; align-items:center; gap:7px; }.question-nav { justify-content:space-between; padding:0 12px 12px; color:#9fb0c9; font-size:11px; }.reset-icon { min-width:31px; font-size:17px; line-height:1; padding:6px 8px; }\n.actions { display:flex; gap:7px; flex-wrap:wrap; margin:12px; }button { background:#2563eb; color:white; border:0; border-radius:7px; padding:7px 9px; cursor:pointer; }button:disabled { cursor:not-allowed; opacity:.45; }.secondary { background:#334155; }.danger { background:#b91c1c; }\n.score { flex:0 0 auto; margin:12px; padding:8px; border-radius:7px; background:#172235; }.settings { flex:0 0 auto; margin:12px; }.settings textarea { height:200px; font:11px ui-monospace,monospace; margin-bottom:8px; }.kattappa-card footer { margin:0 12px 12px; font-size:11px; }\n.kattappa-blocked { filter:blur(5px)!important; pointer-events:none!important; user-select:none!important; opacity:.38!important; }\n/* A 20px band inside each side moves the popup. The outer edge remains for resize. */\n.drag-boundary { position:absolute; z-index:1; touch-action:none; cursor:grab; }.drag-boundary.n,.drag-boundary.s { left:20px; right:20px; height:20px; }.drag-boundary.n { top:0; }.drag-boundary.s { bottom:0; }.drag-boundary.e,.drag-boundary.w { top:20px; bottom:20px; width:20px; }.drag-boundary.e { right:0; }.drag-boundary.w { left:0; }\n.resize-handle { position:absolute; z-index:2; touch-action:none; }.resize-handle.n,.resize-handle.s { left:10px; right:10px; height:10px; cursor:ns-resize; }.resize-handle.n { top:-5px; }.resize-handle.s { bottom:-5px; }.resize-handle.e,.resize-handle.w { top:10px; bottom:10px; width:10px; cursor:ew-resize; }.resize-handle.e { right:-5px; }.resize-handle.w { left:-5px; }.resize-handle.ne,.resize-handle.nw,.resize-handle.se,.resize-handle.sw { width:14px; height:14px; }.resize-handle.ne { right:-7px; top:-7px; cursor:nesw-resize; }.resize-handle.nw { left:-7px; top:-7px; cursor:nwse-resize; }.resize-handle.se { right:-7px; bottom:-7px; cursor:nwse-resize; }.resize-handle.sw { left:-7px; bottom:-7px; cursor:nesw-resize; }\n@keyframes kattappa-out-left { to { transform:translateX(-110%); opacity:0; } }@keyframes kattappa-in-right { from { transform:translateX(110%); opacity:0; } to { transform:translateX(0); opacity:1; } }@keyframes kattappa-out-right { to { transform:translateX(110%); opacity:0; } }@keyframes kattappa-in-left { from { transform:translateX(-110%); opacity:0; } to { transform:translateX(0); opacity:1; } }\n@keyframes kattappa-slide-in { from { transform:translateX(28px); opacity:0; } to { transform:translateX(0); opacity:1; } }\n';
 
   // src/modules/protection/index.ts
   function clickOnce(selector, marker) {
@@ -24244,8 +24266,9 @@ var Kattappa = (() => {
 
   // src/main.tsx
   var import_jsx_runtime2 = __toESM(require_jsx_runtime(), 1);
-  var styleId = "kattappa-styles";
   var rootId = "kattappa-root";
+  var appId = "kattappa-app";
+  var mountDelayMs = 1500;
   var reactRoot = null;
   storage.connect();
   startGrowwBackgroundRuntime();
@@ -24254,17 +24277,22 @@ var Kattappa = (() => {
     return isLocalPreview || location.hostname === "915.groww.in" && location.pathname.startsWith("/terminal");
   }
   function mountKattappa() {
-    if (reactRoot || !isGrowwTerminal() || !document.body) return;
-    if (!document.getElementById(styleId)) {
-      const style = document.createElement("style");
-      style.id = styleId;
-      style.textContent = styles_default;
-      document.head.append(style);
-    }
-    const container = document.createElement("div");
-    container.id = rootId;
-    document.body.append(container);
-    reactRoot = (0, import_client.createRoot)(container);
+    if (!isGrowwTerminal() || !document.body) return;
+    const existingHost = document.getElementById(rootId);
+    if (reactRoot && existingHost?.isConnected) return;
+    reactRoot?.unmount();
+    reactRoot = null;
+    existingHost?.remove();
+    const host = document.createElement("div");
+    host.id = rootId;
+    const shadow = host.attachShadow({ mode: "open" });
+    const style = document.createElement("style");
+    style.textContent = styles_default;
+    const app = document.createElement("div");
+    app.id = appId;
+    shadow.append(style, app);
+    document.body.append(host);
+    reactRoot = (0, import_client.createRoot)(app);
     reactRoot.render(/* @__PURE__ */ (0, import_jsx_runtime2.jsx)(App, {}));
   }
   function unmountKattappa() {
@@ -24272,16 +24300,19 @@ var Kattappa = (() => {
     reactRoot?.unmount();
     reactRoot = null;
     document.getElementById(rootId)?.remove();
-    document.getElementById(styleId)?.remove();
   }
   function syncKattappaRoute() {
     if (isGrowwTerminal()) mountKattappa();
     else unmountKattappa();
   }
-  syncKattappaRoute();
-  window.addEventListener("popstate", syncKattappaRoute);
-  window.addEventListener("hashchange", syncKattappaRoute);
-  window.setInterval(syncKattappaRoute, 500);
+  function startUiRuntime() {
+    window.setTimeout(syncKattappaRoute, mountDelayMs);
+    window.addEventListener("popstate", syncKattappaRoute);
+    window.addEventListener("hashchange", syncKattappaRoute);
+    window.setInterval(syncKattappaRoute, 750);
+  }
+  if (document.readyState === "complete") startUiRuntime();
+  else window.addEventListener("load", startUiRuntime, { once: true });
 })();
 /*! Bundled license information:
 

@@ -93,7 +93,7 @@ export function App() {
   function startResize(event: React.PointerEvent<HTMLDivElement>, direction: Direction) {
     const root = document.getElementById('kattappa-root'); if (!root) return;
     event.preventDefault(); event.stopPropagation(); const rect = root.getBoundingClientRect();
-    const card = root.querySelector<HTMLElement>('.kattappa-card');
+    const card = root.shadowRoot?.querySelector<HTMLElement>('.kattappa-card');
     // Temporarily remove the forced fill height to find the height needed by real content.
     const previousHeight = card?.style.height ?? '';
     if (card) card.style.height = 'auto';
