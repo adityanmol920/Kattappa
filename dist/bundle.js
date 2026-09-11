@@ -2999,11 +2999,11 @@ var Kattappa = (() => {
           if (!node) return false;
           var tracker = node._valueTracker;
           if (!tracker) return true;
-          var lastValue = tracker.getValue();
+          var lastValue2 = tracker.getValue();
           var value = "";
           node && (value = isCheckable(node) ? node.checked ? "true" : "false" : node.value);
           node = value;
-          return node !== lastValue ? (tracker.setValue(node), true) : false;
+          return node !== lastValue2 ? (tracker.setValue(node), true) : false;
         }
         function escapeSelectorAttributeValueInsideDoubleQuotes(value) {
           return value.replace(
@@ -23899,6 +23899,10 @@ var Kattappa = (() => {
     allowedHosts: [],
     balanceUrl: "https://groww.in/user/balance/inr",
     balanceSelector: '#inrWalletPage [class*="INRWalletViewV2_header"] .contentPrimary',
+    terminalPnlUrl: "https://915.groww.in/terminal/",
+    terminalPnlSelector: '.actionableElement[class*="__pnlLoss"] > :nth-child(2), .actionableElement[class*="__pnlProfit"] > :nth-child(2)',
+    investmentsPnlUrl: "https://groww.in/futures-and-options/user/investments",
+    investmentsPnlSelector: '[class*="positionTotalReturn_totalReturnsAppear___5nBe"]',
     dayPnlSelector: "",
     openTradePnlSelector: "",
     killSwitchUrl: "",
@@ -23948,11 +23952,35 @@ var Kattappa = (() => {
   }
 
   // src/modules/dom/index.ts
+  var suffixMultipliers = {
+    k: 1e3,
+    m: 1e6,
+    b: 1e9,
+    l: 1e5,
+    lac: 1e5,
+    lakh: 1e5,
+    cr: 1e7,
+    crore: 1e7
+  };
+  function parseFinancialNumber(input) {
+    if (input == null) return null;
+    const normalized = String(input).replace(/[−–—]/g, "-").replace(/,/g, "").replace(/\s+/g, "");
+    const tokens = normalized.match(/[+-]?(?:₹|INR|Rs\.?)?[+-]?(?:\d+(?:\.\d+)?|\.\d+)(?:crore|lakh|lac|cr|k|m|b|l)?/gi);
+    if (!tokens?.length) return null;
+    const token = tokens.find((value2) => /₹|INR|Rs\.?|crore|lakh|lac|cr|k|m|b|l/i.test(value2)) ?? tokens.at(-1);
+    const numeric = token.match(/\d+(?:\.\d+)?|\.\d+/)?.[0];
+    if (!numeric) return null;
+    const suffix = token.slice(token.indexOf(numeric) + numeric.length).toLowerCase();
+    const multiplier = suffixMultipliers[suffix] ?? 1;
+    const negative = token.includes("-") || /\([^)]*\d[^)]*\)/.test(normalized);
+    const value = Number(numeric) * multiplier;
+    if (!Number.isFinite(value)) return null;
+    return negative ? -Math.abs(value) : value;
+  }
   var readNumber = (selector) => {
     if (!selector) return null;
     const text = document.querySelector(selector)?.textContent;
-    const value = Number((text ?? "").replace(/,/g, "").replace(/[^0-9.+-]/g, ""));
-    return Number.isFinite(value) ? value : null;
+    return parseFinancialNumber(text);
   };
   function setNodes(selectors, blocked, mode) {
     selectors.forEach((selector) => document.querySelectorAll(selector).forEach((node) => {
@@ -24293,6 +24321,56 @@ var Kattappa = (() => {
     run();
   }
 
+  // src/modules/pnl/index.ts
+  var lastSource = null;
+  var lastValue = null;
+  var scheduled = false;
+  function matchesRoute(targetUrl) {
+    try {
+      const target = new URL(targetUrl);
+      const currentPath = location.pathname.replace(/\/$/, "");
+      const targetPath = target.pathname.replace(/\/$/, "");
+      return location.origin === target.origin && (currentPath === targetPath || currentPath.startsWith(`${targetPath}/`));
+    } catch {
+      return false;
+    }
+  }
+  function currentSource(config) {
+    if (matchesRoute(config.terminalPnlUrl)) return { name: "terminal", selector: config.terminalPnlSelector };
+    if (matchesRoute(config.investmentsPnlUrl)) return { name: "investments", selector: config.investmentsPnlSelector };
+    return null;
+  }
+  function capturePnl() {
+    const config = resolveConfig(storage.read().config);
+    const source = currentSource(config);
+    if (!source) {
+      lastSource = null;
+      lastValue = null;
+      return;
+    }
+    const value = readNumber(source.selector);
+    if (value == null || lastSource === source.name && lastValue === value) return;
+    lastSource = source.name;
+    lastValue = value;
+    storage.write({ dayPnl: value, dayPnlUpdatedAt: Date.now(), dayPnlSource: source.name, dayPnlSourceUrl: location.href });
+  }
+  function scheduleCapture() {
+    if (scheduled) return;
+    scheduled = true;
+    window.requestAnimationFrame(() => {
+      scheduled = false;
+      capturePnl();
+    });
+  }
+  function startPnlRuntime() {
+    const observer = new MutationObserver(scheduleCapture);
+    observer.observe(document.documentElement, { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ["class"] });
+    window.addEventListener("popstate", scheduleCapture);
+    window.addEventListener("hashchange", scheduleCapture);
+    window.setInterval(capturePnl, 250);
+    capturePnl();
+  }
+
   // src/main.tsx
   var import_jsx_runtime2 = __toESM(require_jsx_runtime(), 1);
   var rootId = "kattappa-root";
@@ -24301,6 +24379,7 @@ var Kattappa = (() => {
   var reactRoot = null;
   storage.connect();
   startGrowwBackgroundRuntime();
+  startPnlRuntime();
   function isGrowwTerminal() {
     const isLocalPreview = location.hostname === "localhost" || location.hostname === "127.0.0.1";
     return isLocalPreview || location.hostname === "915.groww.in" && location.pathname.startsWith("/terminal");

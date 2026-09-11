@@ -5,6 +5,10 @@ export interface Config {
   allowedHosts: string[];
   balanceUrl: string;
   balanceSelector: string;
+  terminalPnlUrl: string;
+  terminalPnlSelector: string;
+  investmentsPnlUrl: string;
+  investmentsPnlSelector: string;
   dayPnlSelector: string;
   openTradePnlSelector: string;
   killSwitchUrl: string;
@@ -29,6 +33,9 @@ export interface AppState {
   capitalCapturedAt?: number;
   capitalSourceUrl?: string;
   dayPnl?: number | null;
+  dayPnlUpdatedAt?: number;
+  dayPnlSource?: 'terminal' | 'investments';
+  dayPnlSourceUrl?: string;
   openTradePnl?: number | null;
   killTriggered?: { reason: string; at: number } | null;
   tradeLossAlert?: { percent: number; at: number } | null;

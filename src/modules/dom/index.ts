@@ -1,9 +1,38 @@
 import type { Bias, Config } from '../../types';
+
+const suffixMultipliers: Record<string, number> = {
+  k: 1_000,
+  m: 1_000_000,
+  b: 1_000_000_000,
+  l: 100_000,
+  lac: 100_000,
+  lakh: 100_000,
+  cr: 10_000_000,
+  crore: 10_000_000
+};
+
+export function parseFinancialNumber(input: string | null | undefined) {
+  if (input == null) return null;
+  const normalized = String(input).replace(/[−–—]/g, '-').replace(/,/g, '').replace(/\s+/g, '');
+  const tokens = normalized.match(/[+-]?(?:₹|INR|Rs\.?)?[+-]?(?:\d+(?:\.\d+)?|\.\d+)(?:crore|lakh|lac|cr|k|m|b|l)?/gi);
+  if (!tokens?.length) return null;
+  // Prefer a currency/suffix token; otherwise the last numeric token is usually
+  // the value when the element also contains a short label.
+  const token = tokens.find(value => /₹|INR|Rs\.?|crore|lakh|lac|cr|k|m|b|l/i.test(value)) ?? tokens.at(-1)!;
+  const numeric = token.match(/\d+(?:\.\d+)?|\.\d+/)?.[0];
+  if (!numeric) return null;
+  const suffix = token.slice(token.indexOf(numeric) + numeric.length).toLowerCase();
+  const multiplier = suffixMultipliers[suffix] ?? 1;
+  const negative = token.includes('-') || /\([^)]*\d[^)]*\)/.test(normalized);
+  const value = Number(numeric) * multiplier;
+  if (!Number.isFinite(value)) return null;
+  return negative ? -Math.abs(value) : value;
+}
+
 export const readNumber = (selector: string) => {
   if (!selector) return null;
   const text = document.querySelector(selector)?.textContent;
-  const value = Number((text ?? '').replace(/,/g, '').replace(/[^0-9.+-]/g, ''));
-  return Number.isFinite(value) ? value : null;
+  return parseFinancialNumber(text);
 };
 function setNodes(selectors: string[], blocked: boolean, mode: Config['gateMode']) {
   selectors.forEach(selector => document.querySelectorAll<HTMLElement>(selector).forEach(node => {

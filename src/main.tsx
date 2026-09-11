@@ -3,6 +3,7 @@ import { App } from './App';
 import styles from './styles.css';
 import { storage } from './modules/storage';
 import { startGrowwBackgroundRuntime } from './modules/runtime';
+import { startPnlRuntime } from './modules/pnl';
 
 const rootId = 'kattappa-root';
 const appId = 'kattappa-app';
@@ -11,6 +12,7 @@ let reactRoot: Root | null = null;
 
 storage.connect();
 startGrowwBackgroundRuntime();
+startPnlRuntime();
 
 function isGrowwTerminal() {
   const isLocalPreview = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
