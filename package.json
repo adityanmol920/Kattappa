@@ -1,7 +1,7 @@
 {
   "name": "kattappa",
   "private": true,
-  "version": "0.2.0",
+  "version": "0.2.2",
   "type": "module",
   "scripts": {
     "build": "esbuild src/main.tsx --bundle --format=iife --global-name=Kattappa --outfile=dist/bundle.js --jsx=automatic --loader:.css=text",
