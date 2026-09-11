@@ -1,4 +1,4 @@
-import { defaultConfig } from '../settings/config';
+import { resolveConfig } from '../settings/config';
 import { poll } from '../protection';
 import { storage } from '../storage';
 
@@ -9,7 +9,7 @@ export function startGrowwBackgroundRuntime() {
   if ((location.hostname !== 'groww.in' && !isLocalPreview) || timer !== null) return;
   const run = () => {
     const state = storage.read();
-    const config = { ...defaultConfig, ...state.config };
+    const config = resolveConfig(state.config);
     poll(state, config);
     timer = window.setTimeout(run, Math.max(1, config.pollingSeconds) * 1000);
   };

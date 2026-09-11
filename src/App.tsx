@@ -1,14 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Answers, AppState, Config } from './types';
 import { storage } from './modules/storage';
-import { defaultConfig } from './modules/settings/config';
+import { defaultConfig, resolveConfig } from './modules/settings/config';
 import { questions } from './modules/questionnaire/data';
 import { assess } from './modules/questionnaire/scoring';
 import { applyDirectionGate } from './modules/dom';
 
 const format = (n?: number | null) => n == null ? '—' : new Intl.NumberFormat(undefined, { maximumFractionDigits: 2 }).format(n);
 const clamp = (value: number, minimum: number, maximum: number) => Math.max(minimum, Math.min(maximum, value));
-function mergedConfig(s: AppState): Config { return { ...defaultConfig, ...s.config }; }
+function mergedConfig(s: AppState): Config { return resolveConfig(s.config); }
 type Direction = 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w' | 'nw';
 type Phase = 'idle' | 'leaving-forward' | 'entering-forward' | 'leaving-back' | 'entering-back';
 

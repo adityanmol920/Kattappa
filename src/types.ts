@@ -3,6 +3,7 @@ export type Answers = Record<string, string>;
 
 export interface Config {
   allowedHosts: string[];
+  balanceUrl: string;
   balanceSelector: string;
   dayPnlSelector: string;
   openTradePnlSelector: string;
@@ -25,6 +26,8 @@ export interface AppState {
   answers?: Answers;
   bias?: Bias;
   capital?: number;
+  capitalCapturedAt?: number;
+  capitalSourceUrl?: string;
   dayPnl?: number | null;
   openTradePnl?: number | null;
   killTriggered?: { reason: string; at: number } | null;

@@ -23897,7 +23897,8 @@ var Kattappa = (() => {
   // src/modules/settings/config.ts
   var defaultConfig = {
     allowedHosts: [],
-    balanceSelector: "",
+    balanceUrl: "https://groww.in/user/balance/inr",
+    balanceSelector: '#inrWalletPage [class*="INRWalletViewV2_header"] .contentPrimary',
     dayPnlSelector: "",
     openTradePnlSelector: "",
     killSwitchUrl: "",
@@ -23913,6 +23914,14 @@ var Kattappa = (() => {
     automaticTradeCloseEnabled: false,
     gateMode: "blur"
   };
+  function resolveConfig(saved) {
+    const merged = { ...defaultConfig, ...saved };
+    return {
+      ...merged,
+      balanceUrl: saved?.balanceUrl?.trim() || defaultConfig.balanceUrl,
+      balanceSelector: saved?.balanceSelector?.trim() || defaultConfig.balanceSelector
+    };
+  }
 
   // src/modules/questionnaire/data.ts
   var questions = [
@@ -23984,7 +23993,7 @@ var Kattappa = (() => {
   var format = (n) => n == null ? "\u2014" : new Intl.NumberFormat(void 0, { maximumFractionDigits: 2 }).format(n);
   var clamp = (value, minimum, maximum) => Math.max(minimum, Math.min(maximum, value));
   function mergedConfig(s) {
-    return { ...defaultConfig, ...s.config };
+    return resolveConfig(s.config);
   }
   function App() {
     const [state, setState] = (0, import_react.useState)(() => storage.read());
@@ -24226,24 +24235,44 @@ var Kattappa = (() => {
     node.click();
     return true;
   }
+  function isCurrentPage(targetUrl) {
+    if (!targetUrl) return false;
+    try {
+      const target = new URL(targetUrl);
+      const normalize = (path) => path.length > 1 ? path.replace(/\/$/, "") : path;
+      return location.origin === target.origin && normalize(location.pathname) === normalize(target.pathname);
+    } catch {
+      return false;
+    }
+  }
   function poll(state, config) {
-    const capital = readNumber(config.balanceSelector) ?? state.capital;
+    const capturedCapital = isCurrentPage(config.balanceUrl) ? readNumber(config.balanceSelector) : null;
+    const capital = capturedCapital ?? state.capital;
     const dayPnl = readNumber(config.dayPnlSelector);
     const openTradePnl = readNumber(config.openTradePnlSelector);
-    storage.write({ capital: capital ?? void 0, dayPnl, openTradePnl });
-    if (!capital || dayPnl == null) return;
-    const dayPercent = dayPnl / capital * 100;
-    const reason = dayPercent >= config.profitKillPercent ? `Day profit reached ${dayPercent.toFixed(2)}%` : dayPercent <= -config.lossKillPercent ? `Day loss reached ${dayPercent.toFixed(2)}%` : null;
-    if (reason && config.killSwitchEnabled && !state.killTriggered) {
-      storage.write({ killTriggered: { reason, at: Date.now() } });
-      if (config.killSwitchUrl && location.href !== config.killSwitchUrl) {
-        const openInTab = globalThis.GM_openInTab;
-        if (typeof openInTab === "function") openInTab(config.killSwitchUrl, { active: true, insert: true });
-        else window.open(config.killSwitchUrl, "_blank", "noopener");
+    const update = {};
+    if (capturedCapital != null) {
+      update.capital = capturedCapital;
+      update.capitalCapturedAt = Date.now();
+      update.capitalSourceUrl = location.href;
+    }
+    if (dayPnl != null) update.dayPnl = dayPnl;
+    if (openTradePnl != null) update.openTradePnl = openTradePnl;
+    if (Object.keys(update).length) storage.write(update);
+    if (state.killTriggered && config.killSwitchEnabled && config.killSwitchToggleSelector) clickOnce(config.killSwitchToggleSelector, "kattappaKillClicked");
+    if (capital && dayPnl != null) {
+      const dayPercent = dayPnl / capital * 100;
+      const reason = dayPercent >= config.profitKillPercent ? `Day profit reached ${dayPercent.toFixed(2)}%` : dayPercent <= -config.lossKillPercent ? `Day loss reached ${dayPercent.toFixed(2)}%` : null;
+      if (reason && config.killSwitchEnabled && !state.killTriggered) {
+        storage.write({ killTriggered: { reason, at: Date.now() } });
+        if (config.killSwitchUrl && location.href !== config.killSwitchUrl) {
+          const openInTab = globalThis.GM_openInTab;
+          if (typeof openInTab === "function") openInTab(config.killSwitchUrl, { active: true, insert: true });
+          else window.open(config.killSwitchUrl, "_blank", "noopener");
+        }
       }
     }
-    if (state.killTriggered && config.killSwitchEnabled && config.killSwitchToggleSelector) clickOnce(config.killSwitchToggleSelector, "kattappaKillClicked");
-    if (openTradePnl != null && openTradePnl < 0 && Math.abs(openTradePnl / capital * 100) >= config.tradeLossPercent) {
+    if (capital && openTradePnl != null && openTradePnl < 0 && Math.abs(openTradePnl / capital * 100) >= config.tradeLossPercent) {
       const alert2 = { percent: Math.abs(openTradePnl / capital * 100), at: Date.now() };
       storage.write({ tradeLossAlert: alert2 });
       if (config.automaticTradeCloseEnabled && config.closeTradeSelector) clickOnce(config.closeTradeSelector, "kattappaCloseClicked");
@@ -24257,7 +24286,7 @@ var Kattappa = (() => {
     if (location.hostname !== "groww.in" && !isLocalPreview || timer !== null) return;
     const run = () => {
       const state = storage.read();
-      const config = { ...defaultConfig, ...state.config };
+      const config = resolveConfig(state.config);
       poll(state, config);
       timer = window.setTimeout(run, Math.max(1, config.pollingSeconds) * 1e3);
     };
