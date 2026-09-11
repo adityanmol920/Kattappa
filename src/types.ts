@@ -39,6 +39,7 @@ export interface AppState {
   openTradePnl?: number | null;
   killTriggered?: { reason: string; at: number } | null;
   tradeLossAlert?: { percent: number; at: number } | null;
+  popupOpen?: boolean;
   popupPosition?: { left: number; top: number };
   popupSize?: { width: number; height: number };
 }

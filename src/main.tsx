@@ -9,6 +9,7 @@ const rootId = 'kattappa-root';
 const appId = 'kattappa-app';
 const mountDelayMs = 1500;
 let reactRoot: Root | null = null;
+let terminalVisitActive = false;
 
 storage.connect();
 startGrowwBackgroundRuntime();
@@ -51,7 +52,16 @@ function unmountKattappa() {
 }
 
 function syncKattappaRoute() {
-  if (isGrowwTerminal()) mountKattappa(); else unmountKattappa();
+  if (isGrowwTerminal()) {
+    if (!terminalVisitActive) {
+      storage.beginTerminalVisit();
+      terminalVisitActive = true;
+    }
+    mountKattappa();
+  } else {
+    terminalVisitActive = false;
+    unmountKattappa();
+  }
 }
 
 function startUiRuntime() {

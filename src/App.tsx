@@ -16,7 +16,7 @@ export function App() {
   const [state, setState] = useState<AppState>(() => storage.read());
   const [showSettings, setShowSettings] = useState(false);
   const [settingsText, setSettingsText] = useState('');
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(() => storage.read().popupOpen ?? false);
   const [draftAnswers, setDraftAnswers] = useState<Answers>(() => storage.read().answers ?? {});
   const [activeQuestion, setActiveQuestion] = useState(0);
   const [phase, setPhase] = useState<Phase>('idle');
@@ -112,9 +112,9 @@ export function App() {
     const end = () => { window.removeEventListener('pointermove', move); storage.write({ popupPosition: latestPosition.current, popupSize: latestSize.current }); };
     window.addEventListener('pointermove', move); window.addEventListener('pointerup', end, { once: true });
   }
-  if (!isOpen) return <button className="load-kattappa" type="button" onClick={() => setIsOpen(true)}>Load Kattappa</button>;
+  if (!isOpen) return <button className="load-kattappa" type="button" onClick={() => { setIsOpen(true); storage.write({ popupOpen: true }); }}>Load Kattappa</button>;
   return <main className="kattappa-card">
-    <header onPointerDown={startDrag}><b>Kattappa</b><span>Trading discipline · drag here</span><button type="button" className="close-kattappa" aria-label="Hide Kattappa" title="Hide Kattappa" onClick={() => setIsOpen(false)}>×</button></header>
+    <header onPointerDown={startDrag}><b>Kattappa</b><span>Trading discipline · drag here</span><button type="button" className="close-kattappa" aria-label="Hide Kattappa" title="Hide Kattappa" onClick={() => { setIsOpen(false); storage.write({ popupOpen: false }); }}>×</button></header>
     <section className="stats"><Stat label="Capital" value={`₹${format(state.capital)}`} /><Stat label="Day P&L" value={`₹${format(state.dayPnl)}`} tone={state.dayPnl == null ? '' : state.dayPnl >= 0 ? 'good' : 'bad'} detail={dayPercent == null ? '' : `${dayPercent.toFixed(2)}%`} /><Stat label="Open P&L" value={`₹${format(state.openTradePnl)}`} tone={state.openTradePnl == null ? '' : state.openTradePnl >= 0 ? 'good' : 'bad'} /><Stat label="Direction" value={state.bias ?? 'LOCKED'} tone={(state.bias ?? 'LOCKED') === 'CE' ? 'good' : (state.bias ?? 'LOCKED') === 'PE' ? 'bad' : 'warn'} /></section>
     {state.killTriggered && <aside className="notice bad"><b>Kill switch triggered.</b> {state.killTriggered.reason}</aside>}
     {state.tradeLossAlert && <aside className="notice warn"><b>Trade-loss alert.</b> {state.tradeLossAlert.percent.toFixed(2)}% of capital reached.</aside>}

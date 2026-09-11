@@ -23838,60 +23838,123 @@ var Kattappa = (() => {
   var import_react = __toESM(require_react(), 1);
 
   // src/modules/storage/index.ts
-  var KEY = "kattappa:v2";
+  var SHARED_KEY = "kattappa:v2";
+  var TAB_KEY = "kattappa:tab:v1";
+  var TREND_ARCHIVE_KEY = "kattappa:trend-archive:v1";
   var sharedApi = globalThis;
+  var tabKeys = /* @__PURE__ */ new Set(["answers", "bias", "popupOpen", "popupPosition", "popupSize"]);
   var connected = false;
-  function readLocal() {
+  function parseStored(storageArea, key, fallback) {
     try {
-      return JSON.parse(localStorage.getItem(KEY) ?? "{}");
+      return JSON.parse(storageArea.getItem(key) ?? "");
     } catch {
-      return {};
+      return fallback;
     }
   }
-  function writeLocal(value) {
+  function readLocalShared() {
+    return parseStored(localStorage, SHARED_KEY, {});
+  }
+  function writeLocalShared(value) {
     try {
-      localStorage.setItem(KEY, JSON.stringify(value));
+      localStorage.setItem(SHARED_KEY, JSON.stringify(value));
+    } catch {
+    }
+  }
+  function readTab() {
+    return parseStored(sessionStorage, TAB_KEY, {});
+  }
+  function writeTab(value) {
+    try {
+      sessionStorage.setItem(TAB_KEY, JSON.stringify(value));
     } catch {
     }
   }
   function readShared() {
     if (typeof sharedApi.GM_getValue !== "function") return null;
-    return sharedApi.GM_getValue(KEY, null);
+    return sharedApi.GM_getValue(SHARED_KEY, null);
+  }
+  function withoutTabState(value) {
+    return Object.fromEntries(Object.entries(value).filter(([key]) => !tabKeys.has(key)));
+  }
+  function hasTrend(value) {
+    return Boolean(value.answers && Object.keys(value.answers).length);
+  }
+  function archiveTrend(value) {
+    if (!hasTrend(value)) return;
+    const archive = parseStored(localStorage, TREND_ARCHIVE_KEY, []);
+    archive.push({ answers: value.answers ?? {}, bias: value.bias, savedAt: Date.now(), url: location.href, title: document.title });
+    try {
+      localStorage.setItem(TREND_ARCHIVE_KEY, JSON.stringify(archive.slice(-50)));
+    } catch {
+    }
   }
   var storage = {
     connect() {
       if (connected) return;
       connected = true;
-      const local = readLocal();
-      const shared = readShared();
-      const merged = { ...local, ...shared ?? {} };
-      writeLocal(merged);
-      if (typeof sharedApi.GM_setValue === "function" && Object.keys(merged).length) sharedApi.GM_setValue(KEY, merged);
-      sharedApi.GM_addValueChangeListener?.(KEY, (_key, _oldValue, newValue) => {
-        const next = newValue ?? {};
-        writeLocal(next);
+      const legacyLocal = readLocalShared();
+      const legacyShared = readShared() ?? {};
+      const legacyTab = {
+        answers: legacyShared.answers ?? legacyLocal.answers,
+        bias: legacyShared.bias ?? legacyLocal.bias,
+        popupOpen: legacyShared.popupOpen ?? legacyLocal.popupOpen,
+        popupPosition: legacyShared.popupPosition ?? legacyLocal.popupPosition,
+        popupSize: legacyShared.popupSize ?? legacyLocal.popupSize
+      };
+      archiveTrend(legacyTab);
+      const currentTab = readTab();
+      writeTab({
+        ...currentTab,
+        popupOpen: currentTab.popupOpen ?? legacyTab.popupOpen,
+        popupPosition: currentTab.popupPosition ?? legacyTab.popupPosition,
+        popupSize: currentTab.popupSize ?? legacyTab.popupSize
+      });
+      const shared = withoutTabState({ ...legacyLocal, ...legacyShared });
+      writeLocalShared(shared);
+      sharedApi.GM_setValue?.(SHARED_KEY, shared);
+      sharedApi.GM_addValueChangeListener?.(SHARED_KEY, (_key, _oldValue, newValue) => {
+        const next = withoutTabState(newValue ?? {});
+        writeLocalShared(next);
         window.dispatchEvent(new Event("kattappa:update"));
       });
     },
     read() {
-      return readShared() ?? readLocal();
+      const shared = withoutTabState(readShared() ?? readLocalShared());
+      return { ...shared, ...readTab() };
     },
     write(patch) {
-      const next = { ...this.read(), ...patch };
-      writeLocal(next);
-      sharedApi.GM_setValue?.(KEY, next);
+      const tabPatch = Object.fromEntries(Object.entries(patch).filter(([key]) => tabKeys.has(key)));
+      const sharedPatch = withoutTabState(patch);
+      if (Object.keys(tabPatch).length) writeTab({ ...readTab(), ...tabPatch });
+      if (Object.keys(sharedPatch).length) {
+        const nextShared = { ...withoutTabState(readShared() ?? readLocalShared()), ...sharedPatch };
+        writeLocalShared(nextShared);
+        sharedApi.GM_setValue?.(SHARED_KEY, nextShared);
+      }
       window.dispatchEvent(new Event("kattappa:update"));
-      return next;
+      return this.read();
+    },
+    beginTerminalVisit() {
+      const current = readTab();
+      archiveTrend(current);
+      const { answers: _answers, bias: _bias, ...remainingTabState } = current;
+      writeTab(remainingTabState);
+      window.dispatchEvent(new Event("kattappa:update"));
+    },
+    getTrendArchive() {
+      return parseStored(localStorage, TREND_ARCHIVE_KEY, []);
     },
     clear() {
       try {
-        localStorage.removeItem(KEY);
+        localStorage.removeItem(SHARED_KEY);
+        localStorage.removeItem(TREND_ARCHIVE_KEY);
+        sessionStorage.removeItem(TAB_KEY);
       } catch {
       }
-      sharedApi.GM_deleteValue?.(KEY);
+      sharedApi.GM_deleteValue?.(SHARED_KEY);
       window.dispatchEvent(new Event("kattappa:update"));
     },
-    key: KEY
+    key: SHARED_KEY
   };
 
   // src/modules/settings/config.ts
@@ -24027,7 +24090,7 @@ var Kattappa = (() => {
     const [state, setState] = (0, import_react.useState)(() => storage.read());
     const [showSettings, setShowSettings] = (0, import_react.useState)(false);
     const [settingsText, setSettingsText] = (0, import_react.useState)("");
-    const [isOpen, setIsOpen] = (0, import_react.useState)(false);
+    const [isOpen, setIsOpen] = (0, import_react.useState)(() => storage.read().popupOpen ?? false);
     const [draftAnswers, setDraftAnswers] = (0, import_react.useState)(() => storage.read().answers ?? {});
     const [activeQuestion, setActiveQuestion] = (0, import_react.useState)(0);
     const [phase, setPhase] = (0, import_react.useState)("idle");
@@ -24159,12 +24222,18 @@ var Kattappa = (() => {
       window.addEventListener("pointermove", move);
       window.addEventListener("pointerup", end, { once: true });
     }
-    if (!isOpen) return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", { className: "load-kattappa", type: "button", onClick: () => setIsOpen(true), children: "Load Kattappa" });
+    if (!isOpen) return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", { className: "load-kattappa", type: "button", onClick: () => {
+      setIsOpen(true);
+      storage.write({ popupOpen: true });
+    }, children: "Load Kattappa" });
     return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("main", { className: "kattappa-card", children: [
       /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("header", { onPointerDown: startDrag, children: [
         /* @__PURE__ */ (0, import_jsx_runtime.jsx)("b", { children: "Kattappa" }),
         /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "Trading discipline \xB7 drag here" }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", { type: "button", className: "close-kattappa", "aria-label": "Hide Kattappa", title: "Hide Kattappa", onClick: () => setIsOpen(false), children: "\xD7" })
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", { type: "button", className: "close-kattappa", "aria-label": "Hide Kattappa", title: "Hide Kattappa", onClick: () => {
+          setIsOpen(false);
+          storage.write({ popupOpen: false });
+        }, children: "\xD7" })
       ] }),
       /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", { className: "stats", children: [
         /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Stat, { label: "Capital", value: `\u20B9${format(state.capital)}` }),
@@ -24377,6 +24446,7 @@ var Kattappa = (() => {
   var appId = "kattappa-app";
   var mountDelayMs = 1500;
   var reactRoot = null;
+  var terminalVisitActive = false;
   storage.connect();
   startGrowwBackgroundRuntime();
   startPnlRuntime();
@@ -24410,8 +24480,16 @@ var Kattappa = (() => {
     document.getElementById(rootId)?.remove();
   }
   function syncKattappaRoute() {
-    if (isGrowwTerminal()) mountKattappa();
-    else unmountKattappa();
+    if (isGrowwTerminal()) {
+      if (!terminalVisitActive) {
+        storage.beginTerminalVisit();
+        terminalVisitActive = true;
+      }
+      mountKattappa();
+    } else {
+      terminalVisitActive = false;
+      unmountKattappa();
+    }
   }
   function startUiRuntime() {
     window.setTimeout(syncKattappaRoute, mountDelayMs);

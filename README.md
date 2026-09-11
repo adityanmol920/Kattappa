@@ -7,7 +7,7 @@ Kattappa is a modular React/TypeScript Tampermonkey overlay for trading discipli
 - `questionnaire`: the six market-context questions and CE/PE/LOCKED scoring.
 - `dom`: visible-value parsing and CE/PE DOM gating.
 - `protection`: balance, day P&L, and open-trade P&L polling; kill switch; optional trade-close action.
-- `storage`: site-local, cross-tab browser persistence.
+- `storage`: tab-scoped questionnaire/UI state plus cross-tab capital, P&L, and risk persistence.
 - `settings`: browser selector and risk-limit configuration.
 
 ## Build
@@ -20,7 +20,14 @@ npm run typecheck
 npm run build
 ```
 
-This generates `dist/bundle.js`. The generated bundle is intentionally not committed. GitHub Actions or your local build process should generate it for each release.
+This generates `dist/bundle.js`. Release tags must include that generated file because the Tampermonkey loader fetches it from the tagged GitHub URL.
+
+## Storage behavior
+
+- Questionnaire answers and the suggested direction use `sessionStorage`, so each terminal tab has its own analysis.
+- Re-entering the terminal starts a fresh questionnaire. The previous analysis is archived locally for a future explicit restore feature, but it is never restored automatically.
+- Popup open state, position, and size are also kept per tab.
+- Capital, P&L, settings, and risk-management alerts remain in shared Tampermonkey storage so they are available across Groww domains and tabs.
 
 ## Tampermonkey installation
 
