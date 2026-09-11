@@ -29,6 +29,8 @@ This generates `dist/bundle.js`. Release tags must include that generated file b
 - Popup open state, position, and size are also kept per tab.
 - Capital, P&L, settings, and risk-management alerts remain in shared Tampermonkey storage so they are available across Groww domains and tabs.
 - On the 915 terminal, an unclear/locked direction hides the complete CE/PE action section. A CE direction hides the PE action card, while a PE direction hides the CE action card. Kattappa adds CSS classes only; Groww's nodes remain in the DOM.
+- Chart buy/sell containers whose class contains `sellBuyButtonsContainer` stay hidden while Kattappa is active, including inside accessible chart iframes.
+- Opening the Kattappa panel adds a viewport overlay that isolates dragging and resizing from the trading page; hiding the panel removes the overlay.
 
 ## Tampermonkey installation
 

@@ -121,12 +121,12 @@ var Kattappa = (() => {
           return 0 !== diff ? diff : a.id - b.id;
         }
         function advanceTimers(currentTime) {
-          for (var timer2 = peek(timerQueue); null !== timer2; ) {
-            if (null === timer2.callback) pop(timerQueue);
-            else if (timer2.startTime <= currentTime)
-              pop(timerQueue), timer2.sortIndex = timer2.expirationTime, push(taskQueue, timer2);
+          for (var timer3 = peek(timerQueue); null !== timer3; ) {
+            if (null === timer3.callback) pop(timerQueue);
+            else if (timer3.startTime <= currentTime)
+              pop(timerQueue), timer3.sortIndex = timer3.expirationTime, push(taskQueue, timer3);
             else break;
-            timer2 = peek(timerQueue);
+            timer3 = peek(timerQueue);
           }
         }
         function handleTimeout(currentTime) {
@@ -24322,92 +24322,95 @@ var Kattappa = (() => {
     if (!isOpen) return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", { className: "load-kattappa", type: "button", onClick: () => {
       setIsOpen(true);
       storage.write({ popupOpen: true });
-    }, children: "Load Kattappa" });
-    return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("main", { className: "kattappa-card", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("header", { onPointerDown: startDrag, children: [
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("b", { children: "Kattappa" }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "Trading discipline \xB7 drag here" }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", { type: "button", className: "close-kattappa", "aria-label": "Hide Kattappa", title: "Hide Kattappa", onClick: () => {
-          setIsOpen(false);
-          storage.write({ popupOpen: false });
-        }, children: "\xD7" })
-      ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", { className: "stats", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Stat, { label: "Capital", value: `\u20B9${format(state.capital)}` }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Stat, { label: "Day P&L", value: `\u20B9${format(state.dayPnl)}`, tone: state.dayPnl == null ? "" : state.dayPnl >= 0 ? "good" : "bad", detail: dayPercent == null ? "" : `${dayPercent.toFixed(2)}%` }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Stat, { label: "Open P&L", value: `\u20B9${format(state.openTradePnl)}`, tone: state.openTradePnl == null ? "" : state.openTradePnl >= 0 ? "good" : "bad" }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Stat, { label: "Direction", value: state.bias ?? "LOCKED", tone: (state.bias ?? "LOCKED") === "CE" ? "good" : (state.bias ?? "LOCKED") === "PE" ? "bad" : "warn" })
-      ] }),
-      state.killTriggered && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("aside", { className: "notice bad", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("b", { children: "Kill switch triggered." }),
-        " ",
-        state.killTriggered.reason
-      ] }),
-      state.tradeLossAlert && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("aside", { className: "notice warn", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("b", { children: "Trade-loss alert." }),
-        " ",
-        state.tradeLossAlert.percent.toFixed(2),
-        "% of capital reached."
-      ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", { className: "questionnaire", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "progress", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "Market assessment" }),
-          /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("b", { children: [
-            activeQuestion + 1,
-            " / ",
-            questions.length
+    }, children: "Kattappa" });
+    return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "kattappa-overlay", "aria-hidden": "true" }),
+      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("main", { className: "kattappa-card", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("header", { onPointerDown: startDrag, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("b", { children: "Kattappa" }),
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "Trading discipline \xB7 drag here" }),
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", { type: "button", className: "close-kattappa", "aria-label": "Hide Kattappa", title: "Hide Kattappa", onClick: () => {
+            setIsOpen(false);
+            storage.write({ popupOpen: false });
+          }, children: "\xD7" })
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", { className: "stats", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Stat, { label: "Capital", value: `\u20B9${format(state.capital)}` }),
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Stat, { label: "Day P&L", value: `\u20B9${format(state.dayPnl)}`, tone: state.dayPnl == null ? "" : state.dayPnl >= 0 ? "good" : "bad", detail: dayPercent == null ? "" : `${dayPercent.toFixed(2)}%` }),
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Stat, { label: "Open P&L", value: `\u20B9${format(state.openTradePnl)}`, tone: state.openTradePnl == null ? "" : state.openTradePnl >= 0 ? "good" : "bad" }),
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Stat, { label: "Direction", value: state.bias ?? "LOCKED", tone: (state.bias ?? "LOCKED") === "CE" ? "good" : (state.bias ?? "LOCKED") === "PE" ? "bad" : "warn" })
+        ] }),
+        state.killTriggered && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("aside", { className: "notice bad", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("b", { children: "Kill switch triggered." }),
+          " ",
+          state.killTriggered.reason
+        ] }),
+        state.tradeLossAlert && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("aside", { className: "notice warn", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("b", { children: "Trade-loss alert." }),
+          " ",
+          state.tradeLossAlert.percent.toFixed(2),
+          "% of capital reached."
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", { className: "questionnaire", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "progress", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "Market assessment" }),
+            /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("b", { children: [
+              activeQuestion + 1,
+              " / ",
+              questions.length
+            ] })
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: `question-stage ${phase}`, children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", { className: "question", children: [
+            label,
+            /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("select", { value: draftAnswers[id] ?? "", onChange: (event) => chooseAnswer(event.target.value), disabled: phase !== "idle", children: [
+              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", { value: "", disabled: true, children: "Choose an assessment\u2026" }),
+              options.map(([value, text]) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", { value, children: text }, value))
+            ] })
+          ] }) }),
+          /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "question-nav", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "question-nav-left", children: [
+              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", { type: "button", className: "secondary", onClick: () => transition("back"), disabled: activeQuestion === 0 || phase !== "idle", children: "\u2190 Back" }),
+              activeQuestion < questions.length - 1 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", { type: "button", onClick: nextQuestion, disabled: !draftAnswers[id] || phase !== "idle", children: "Next \u2192" }),
+              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", { type: "button", className: "secondary reset-icon", onClick: resetAssessment, "aria-label": "Reset assessment", title: "Reset assessment", children: "\u21BA" })
+            ] }),
+            activeQuestion === questions.length - 1 && draftAnswers[id] && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", { type: "button", onClick: nextQuestion, disabled: phase !== "idle", children: "Suggest trend" })
           ] })
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: `question-stage ${phase}`, children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", { className: "question", children: [
-          label,
-          /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("select", { value: draftAnswers[id] ?? "", onChange: (event) => chooseAnswer(event.target.value), disabled: phase !== "idle", children: [
-            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", { value: "", disabled: true, children: "Choose an assessment\u2026" }),
-            options.map(([value, text]) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", { value, children: text }, value))
-          ] })
-        ] }) }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "question-nav", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "question-nav-left", children: [
-            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", { type: "button", className: "secondary", onClick: () => transition("back"), disabled: activeQuestion === 0 || phase !== "idle", children: "\u2190 Back" }),
-            activeQuestion < questions.length - 1 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", { type: "button", onClick: nextQuestion, disabled: !draftAnswers[id] || phase !== "idle", children: "Next \u2192" }),
-            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", { type: "button", className: "secondary reset-icon", onClick: resetAssessment, "aria-label": "Reset assessment", title: "Reset assessment", children: "\u21BA" })
-          ] }),
-          activeQuestion === questions.length - 1 && draftAnswers[id] && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", { type: "button", onClick: nextQuestion, disabled: phase !== "idle", children: "Suggest trend" })
-        ] })
-      ] }),
-      result.answered === questions.length && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("aside", { className: `notice ${result.bias === "CE" ? "good" : result.bias === "PE" ? "bad" : "warn"}`, children: [
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("b", { children: "Direction result:" }),
-        " ",
-        result.bias === "CE" ? "Bullish \u2014 CE access allowed." : result.bias === "PE" ? "Bearish \u2014 PE access allowed." : "No clear direction \u2014 both sides remain locked.",
-        " ",
-        state.bias === result.bias ? "" : "Press Suggest trend to enforce it."
-      ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", { className: "score", children: [
-        "Score ",
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("b", { children: result.score }),
-        " \xB7 ",
-        result.answered,
-        "/6 answered \xB7 CE needs +3, PE needs \u22123."
-      ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "actions", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", { className: "secondary", onClick: () => storage.write({ bias: "LOCKED" }), children: "Lock both sides" }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", { className: "secondary", onClick: () => setState(storage.read()), children: "Refresh values" }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", { className: "secondary", onClick: () => {
-          setSettingsText(JSON.stringify(config, null, 2));
-          setShowSettings(!showSettings);
-        }, children: "Settings" }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", { className: "danger", onClick: () => storage.write({ killTriggered: null, tradeLossAlert: null }), children: "Reset alerts" })
-      ] }),
-      showSettings && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", { className: "settings", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", { children: "Use verified broker URLs and selectors only. Both automatic actions are off by default." }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("textarea", { value: settingsText, onChange: (e) => setSettingsText(e.target.value) }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", { onClick: saveSettings, children: "Save settings" })
-      ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("footer", { children: [
-        "DOM-only \xB7 Browser storage key: ",
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("code", { children: storage.key })
-      ] }),
-      ["n", "e", "s", "w"].map((edge) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: `drag-boundary ${edge}`, onPointerDown: startDrag, "aria-label": "Drag Kattappa" }, edge)),
-      ["n", "ne", "e", "se", "s", "sw", "w", "nw"].map((direction) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: `resize-handle ${direction}`, onPointerDown: (event) => startResize(event, direction) }, direction))
+        result.answered === questions.length && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("aside", { className: `notice ${result.bias === "CE" ? "good" : result.bias === "PE" ? "bad" : "warn"}`, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("b", { children: "Direction result:" }),
+          " ",
+          result.bias === "CE" ? "Bullish \u2014 CE access allowed." : result.bias === "PE" ? "Bearish \u2014 PE access allowed." : "No clear direction \u2014 both sides remain locked.",
+          " ",
+          state.bias === result.bias ? "" : "Press Suggest trend to enforce it."
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", { className: "score", children: [
+          "Score ",
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("b", { children: result.score }),
+          " \xB7 ",
+          result.answered,
+          "/6 answered \xB7 CE needs +3, PE needs \u22123."
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "actions", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", { className: "secondary", onClick: () => storage.write({ bias: "LOCKED" }), children: "Lock both sides" }),
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", { className: "secondary", onClick: () => setState(storage.read()), children: "Refresh values" }),
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", { className: "secondary", onClick: () => {
+            setSettingsText(JSON.stringify(config, null, 2));
+            setShowSettings(!showSettings);
+          }, children: "Settings" }),
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", { className: "danger", onClick: () => storage.write({ killTriggered: null, tradeLossAlert: null }), children: "Reset alerts" })
+        ] }),
+        showSettings && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", { className: "settings", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", { children: "Use verified broker URLs and selectors only. Both automatic actions are off by default." }),
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("textarea", { value: settingsText, onChange: (e) => setSettingsText(e.target.value) }),
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", { onClick: saveSettings, children: "Save settings" })
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("footer", { children: [
+          "DOM-only \xB7 Browser storage key: ",
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("code", { children: storage.key })
+        ] }),
+        ["n", "e", "s", "w"].map((edge) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: `drag-boundary ${edge}`, onPointerDown: startDrag, "aria-label": "Drag Kattappa" }, edge)),
+        ["n", "ne", "e", "se", "s", "sw", "w", "nw"].map((direction) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: `resize-handle ${direction}`, onPointerDown: (event) => startResize(event, direction) }, direction))
+      ] })
     ] });
   }
   function Stat({ label, value, tone = "", detail = "" }) {
@@ -24419,7 +24422,7 @@ var Kattappa = (() => {
   }
 
   // src/styles.css
-  var styles_default = ':host { position:fixed; right:18px; top:100px; z-index:2147483647; width:400px; height:auto; min-width:400px; min-height:400px; max-width:100vw; max-height:100vh; color:#eaf0ff; font:13px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }\n:host(.kattappa-collapsed) { left:auto!important; right:0!important; top:50%!important; width:auto!important; height:auto!important; min-width:0!important; min-height:0!important; transform:translateY(-50%); }\n.load-kattappa { display:block; border-radius:9px 0 0 9px; padding:12px 10px; background:#2563eb; box-shadow:0 8px 24px #0008; }\n.kattappa-card { position:relative; display:flex; flex-direction:column; width:100%; min-height:400px; height:100%; background:#101827; border:1px solid #334155; border-radius:12px; box-shadow:0 18px 50px #0008; overflow:auto; animation:kattappa-slide-in .24s ease-out both; }\n.kattappa-card header { display:flex; flex:0 0 auto; justify-content:space-between; padding:11px 13px; background:#172235; cursor:grab; touch-action:none; }\n.close-kattappa { margin:-5px -5px -5px 5px; padding:3px 8px; background:transparent; color:#9fb0c9; font-size:20px; line-height:1; }\n.kattappa-card header:active,.drag-boundary:active { cursor:grabbing; }\n.kattappa-card header span,.kattappa-card small,.kattappa-card footer { color:#9fb0c9; }\n.stats { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; padding:12px; }\n.stat { min-width:0; background:#172235; border-radius:8px; padding:8px; }.stat small,.stat b { display:block; overflow:hidden; text-overflow:ellipsis; }.stat b { font-size:16px; }\n.good { color:#5eead4; }.bad { color:#fda4af; }.warn { color:#fcd34d; }\n.notice { flex:0 0 auto; margin:0 12px 10px; padding:8px; border-radius:7px; background:#172235; }\n.questionnaire { flex:0 0 auto; margin:0 12px; border:1px solid #334155; border-radius:9px; background:#0d1728; overflow:hidden; }\n.progress { display:flex; justify-content:space-between; padding:9px 10px; border-bottom:1px solid #334155; color:#9fb0c9; }\n.question-stage { min-height:116px; padding-top:1px; }.question-stage.leaving-forward { animation:kattappa-out-left .19s ease-in forwards; }.question-stage.entering-forward { animation:kattappa-in-right .22s ease-out both; }.question-stage.leaving-back { animation:kattappa-out-right .19s ease-in forwards; }.question-stage.entering-back { animation:kattappa-in-left .22s ease-out both; }\n.question { display:block; margin:12px; font-weight:600; }.question select,textarea { box-sizing:border-box; width:100%; margin-top:8px; padding:8px; background:#0b1220; color:#eaf0ff; border:1px solid #40516b; border-radius:6px; }\n.question-nav,.question-nav-left { display:flex; align-items:center; gap:7px; }.question-nav { justify-content:space-between; padding:0 12px 12px; color:#9fb0c9; font-size:11px; }.reset-icon { min-width:31px; font-size:17px; line-height:1; padding:6px 8px; }\n.actions { display:flex; gap:7px; flex-wrap:wrap; margin:12px; }button { background:#2563eb; color:white; border:0; border-radius:7px; padding:7px 9px; cursor:pointer; }button:disabled { cursor:not-allowed; opacity:.45; }.secondary { background:#334155; }.danger { background:#b91c1c; }\n.score { flex:0 0 auto; margin:12px; padding:8px; border-radius:7px; background:#172235; }.settings { flex:0 0 auto; margin:12px; }.settings textarea { height:200px; font:11px ui-monospace,monospace; margin-bottom:8px; }.kattappa-card footer { margin:0 12px 12px; font-size:11px; }\n.kattappa-blocked { filter:blur(5px)!important; pointer-events:none!important; user-select:none!important; opacity:.38!important; }\n/* A 20px band inside each side moves the popup. The outer edge remains for resize. */\n.drag-boundary { position:absolute; z-index:1; touch-action:none; cursor:grab; }.drag-boundary.n,.drag-boundary.s { left:20px; right:20px; height:20px; }.drag-boundary.n { top:0; }.drag-boundary.s { bottom:0; }.drag-boundary.e,.drag-boundary.w { top:20px; bottom:20px; width:20px; }.drag-boundary.e { right:0; }.drag-boundary.w { left:0; }\n.resize-handle { position:absolute; z-index:2; touch-action:none; }.resize-handle.n,.resize-handle.s { left:10px; right:10px; height:10px; cursor:ns-resize; }.resize-handle.n { top:-5px; }.resize-handle.s { bottom:-5px; }.resize-handle.e,.resize-handle.w { top:10px; bottom:10px; width:10px; cursor:ew-resize; }.resize-handle.e { right:-5px; }.resize-handle.w { left:-5px; }.resize-handle.ne,.resize-handle.nw,.resize-handle.se,.resize-handle.sw { width:14px; height:14px; }.resize-handle.ne { right:-7px; top:-7px; cursor:nesw-resize; }.resize-handle.nw { left:-7px; top:-7px; cursor:nwse-resize; }.resize-handle.se { right:-7px; bottom:-7px; cursor:nwse-resize; }.resize-handle.sw { left:-7px; bottom:-7px; cursor:nesw-resize; }\n@keyframes kattappa-out-left { to { transform:translateX(-110%); opacity:0; } }@keyframes kattappa-in-right { from { transform:translateX(110%); opacity:0; } to { transform:translateX(0); opacity:1; } }@keyframes kattappa-out-right { to { transform:translateX(110%); opacity:0; } }@keyframes kattappa-in-left { from { transform:translateX(-110%); opacity:0; } to { transform:translateX(0); opacity:1; } }\n@keyframes kattappa-slide-in { from { transform:translateX(28px); opacity:0; } to { transform:translateX(0); opacity:1; } }\n';
+  var styles_default = ':host { position:fixed; right:18px; top:100px; z-index:2147483647; width:400px; height:auto; min-width:400px; min-height:400px; max-width:100vw; max-height:100vh; color:#eaf0ff; font:13px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }\n:host(.kattappa-collapsed) { left:auto!important; right:0!important; top:50%!important; width:auto!important; height:auto!important; min-width:0!important; min-height:0!important; transform:translateY(-50%); }\n.load-kattappa { display:block; border-radius:9px 0 0 9px; padding:12px 10px; background:#2563eb; box-shadow:0 8px 24px #0008; }\n.kattappa-overlay { position:fixed; inset:0; z-index:0; background:rgb(2 6 23 / 28%); pointer-events:auto; touch-action:none; }\n.kattappa-card { position:relative; z-index:1; display:flex; flex-direction:column; width:100%; min-height:400px; height:100%; background:#101827; border:1px solid #334155; border-radius:12px; box-shadow:0 18px 50px #0008; overflow:auto; animation:kattappa-slide-in .24s ease-out both; }\n.kattappa-card header { display:flex; flex:0 0 auto; justify-content:space-between; padding:11px 13px; background:#172235; cursor:grab; touch-action:none; }\n.close-kattappa { position:relative; z-index:5; display:grid; place-items:center; min-width:36px; min-height:36px; margin:-7px -7px -7px 6px; padding:0; background:transparent; color:#9fb0c9; font-size:20px; line-height:1; pointer-events:auto; }\n.kattappa-card header:active,.drag-boundary:active { cursor:grabbing; }\n.kattappa-card header span,.kattappa-card small,.kattappa-card footer { color:#9fb0c9; }\n.stats { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; padding:12px; }\n.stat { min-width:0; background:#172235; border-radius:8px; padding:8px; }.stat small,.stat b { display:block; overflow:hidden; text-overflow:ellipsis; }.stat b { font-size:16px; }\n.good { color:#5eead4; }.bad { color:#fda4af; }.warn { color:#fcd34d; }\n.notice { flex:0 0 auto; margin:0 12px 10px; padding:8px; border-radius:7px; background:#172235; }\n.questionnaire { flex:0 0 auto; margin:0 12px; border:1px solid #334155; border-radius:9px; background:#0d1728; overflow:hidden; }\n.progress { display:flex; justify-content:space-between; padding:9px 10px; border-bottom:1px solid #334155; color:#9fb0c9; }\n.question-stage { min-height:116px; padding-top:1px; }.question-stage.leaving-forward { animation:kattappa-out-left .19s ease-in forwards; }.question-stage.entering-forward { animation:kattappa-in-right .22s ease-out both; }.question-stage.leaving-back { animation:kattappa-out-right .19s ease-in forwards; }.question-stage.entering-back { animation:kattappa-in-left .22s ease-out both; }\n.question { display:block; margin:12px; font-weight:600; }.question select,textarea { box-sizing:border-box; width:100%; margin-top:8px; padding:8px; background:#0b1220; color:#eaf0ff; border:1px solid #40516b; border-radius:6px; }\n.question-nav,.question-nav-left { display:flex; align-items:center; gap:7px; }.question-nav { justify-content:space-between; padding:0 12px 12px; color:#9fb0c9; font-size:11px; }.reset-icon { min-width:31px; font-size:17px; line-height:1; padding:6px 8px; }\n.actions { display:flex; gap:7px; flex-wrap:wrap; margin:12px; }button { background:#2563eb; color:white; border:0; border-radius:7px; padding:7px 9px; cursor:pointer; }button:disabled { cursor:not-allowed; opacity:.45; }.secondary { background:#334155; }.danger { background:#b91c1c; }\n.score { flex:0 0 auto; margin:12px; padding:8px; border-radius:7px; background:#172235; }.settings { flex:0 0 auto; margin:12px; }.settings textarea { height:200px; font:11px ui-monospace,monospace; margin-bottom:8px; }.kattappa-card footer { margin:0 12px 12px; font-size:11px; }\n.kattappa-blocked { filter:blur(5px)!important; pointer-events:none!important; user-select:none!important; opacity:.38!important; }\n/* A 20px band inside each side moves the popup. The outer edge remains for resize. */\n.drag-boundary { position:absolute; z-index:1; touch-action:none; cursor:grab; }.drag-boundary.n,.drag-boundary.s { left:20px; right:20px; height:20px; }.drag-boundary.n { top:0; }.drag-boundary.s { bottom:0; }.drag-boundary.e,.drag-boundary.w { top:20px; bottom:20px; width:20px; }.drag-boundary.e { right:0; }.drag-boundary.w { left:0; }\n.resize-handle { position:absolute; z-index:2; touch-action:none; }.resize-handle.n,.resize-handle.s { left:10px; right:10px; height:10px; cursor:ns-resize; }.resize-handle.n { top:-5px; }.resize-handle.s { bottom:-5px; }.resize-handle.e,.resize-handle.w { top:10px; bottom:10px; width:10px; cursor:ew-resize; }.resize-handle.e { right:-5px; }.resize-handle.w { left:-5px; }.resize-handle.ne,.resize-handle.nw,.resize-handle.se,.resize-handle.sw { width:14px; height:14px; }.resize-handle.ne { right:-7px; top:-7px; cursor:nesw-resize; }.resize-handle.nw { left:-7px; top:-7px; cursor:nwse-resize; }.resize-handle.se { right:-7px; bottom:-7px; cursor:nwse-resize; }.resize-handle.sw { left:-7px; bottom:-7px; cursor:nesw-resize; }\n@keyframes kattappa-out-left { to { transform:translateX(-110%); opacity:0; } }@keyframes kattappa-in-right { from { transform:translateX(110%); opacity:0; } to { transform:translateX(0); opacity:1; } }@keyframes kattappa-out-right { to { transform:translateX(110%); opacity:0; } }@keyframes kattappa-in-left { from { transform:translateX(-110%); opacity:0; } to { transform:translateX(0); opacity:1; } }\n@keyframes kattappa-slide-in { from { transform:translateX(28px); opacity:0; } to { transform:translateX(0); opacity:1; } }\n';
 
   // src/modules/protection/index.ts
   function clickOnce(selector, marker) {
@@ -24537,6 +24540,64 @@ var Kattappa = (() => {
     capturePnl();
   }
 
+  // src/modules/chart-controls/index.ts
+  var BUTTON_CONTAINER_SELECTOR = '[class*="sellBuyButtonsContainer"]';
+  var HIDDEN_CLASS = "kattappa-chart-trade-buttons-hidden";
+  var MANAGED_ATTRIBUTE = "data-kattappa-chart-trade-buttons";
+  var STYLE_ID = "kattappa-chart-trade-buttons-style";
+  var refreshIntervalMs = 500;
+  var managedDocuments = /* @__PURE__ */ new Set();
+  var timer2 = null;
+  function ensureStyle(doc) {
+    if (doc.getElementById(STYLE_ID) || !doc.documentElement) return;
+    const style = doc.createElement("style");
+    style.id = STYLE_ID;
+    style.textContent = `.${HIDDEN_CLASS}{display:none!important;pointer-events:none!important;user-select:none!important;}`;
+    (doc.head ?? doc.documentElement).append(style);
+  }
+  function hideButtonsInDocument(doc, visited) {
+    if (visited.has(doc)) return;
+    visited.add(doc);
+    ensureStyle(doc);
+    managedDocuments.add(doc);
+    doc.querySelectorAll(BUTTON_CONTAINER_SELECTOR).forEach((container) => {
+      container.setAttribute(MANAGED_ATTRIBUTE, "hidden");
+      container.classList.add(HIDDEN_CLASS);
+    });
+    doc.querySelectorAll("iframe").forEach((frame) => {
+      try {
+        if (frame.contentDocument) hideButtonsInDocument(frame.contentDocument, visited);
+      } catch {
+      }
+    });
+  }
+  function refreshChartTradeButtonGate() {
+    hideButtonsInDocument(document, /* @__PURE__ */ new Set());
+  }
+  function startChartTradeButtonGate() {
+    if (timer2 !== null) return;
+    const refresh = () => {
+      refreshChartTradeButtonGate();
+      timer2 = window.setTimeout(refresh, refreshIntervalMs);
+    };
+    refresh();
+  }
+  function stopChartTradeButtonGate() {
+    if (timer2 !== null) window.clearTimeout(timer2);
+    timer2 = null;
+    managedDocuments.forEach((doc) => {
+      try {
+        doc.querySelectorAll(`[${MANAGED_ATTRIBUTE}]`).forEach((container) => {
+          container.classList.remove(HIDDEN_CLASS);
+          container.removeAttribute(MANAGED_ATTRIBUTE);
+        });
+        doc.getElementById(STYLE_ID)?.remove();
+      } catch {
+      }
+    });
+    managedDocuments.clear();
+  }
+
   // src/main.tsx
   var import_jsx_runtime2 = __toESM(require_jsx_runtime(), 1);
   var rootId = "kattappa-root";
@@ -24544,9 +24605,7 @@ var Kattappa = (() => {
   var mountDelayMs = 1500;
   var reactRoot = null;
   var terminalVisitActive = false;
-  storage.connect();
-  startGrowwBackgroundRuntime();
-  startPnlRuntime();
+  var isTopLevelWindow = window.top === window.self;
   function isGrowwTerminal() {
     const isLocalPreview = location.hostname === "localhost" || location.hostname === "127.0.0.1";
     return isLocalPreview || location.hostname === "915.groww.in" && location.pathname.startsWith("/terminal");
@@ -24572,6 +24631,7 @@ var Kattappa = (() => {
   }
   function unmountKattappa() {
     if (isGrowwTerminal()) return;
+    stopChartTradeButtonGate();
     clearDirectionGate();
     reactRoot?.unmount();
     reactRoot = null;
@@ -24579,6 +24639,7 @@ var Kattappa = (() => {
   }
   function syncKattappaRoute() {
     if (isGrowwTerminal()) {
+      startChartTradeButtonGate();
       if (!terminalVisitActive) {
         storage.beginTerminalVisit();
         terminalVisitActive = true;
@@ -24595,8 +24656,16 @@ var Kattappa = (() => {
     window.addEventListener("hashchange", syncKattappaRoute);
     window.setInterval(syncKattappaRoute, 750);
   }
-  if (document.readyState === "complete") startUiRuntime();
-  else window.addEventListener("load", startUiRuntime, { once: true });
+  if (isTopLevelWindow) {
+    storage.connect();
+    startGrowwBackgroundRuntime();
+    startPnlRuntime();
+    if (isGrowwTerminal()) startChartTradeButtonGate();
+    if (document.readyState === "complete") startUiRuntime();
+    else window.addEventListener("load", startUiRuntime, { once: true });
+  } else {
+    startChartTradeButtonGate();
+  }
 })();
 /*! Bundled license information:
 

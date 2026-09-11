@@ -1,11 +1,11 @@
 // ==UserScript==
 // @name         Kattappa — Direction & Capital Protection
 // @namespace    https://github.com/adityanmol920/Kattappa
-// @version      0.2.9
+// @version      0.2.10
 // @description  Kattappa trading discipline overlay.
 // @match        https://915.groww.in/*
 // @match        https://groww.in/*
-// @require      https://raw.githubusercontent.com/adityanmol920/Kattappa/v0.2.9/dist/bundle.js
+// @require      https://raw.githubusercontent.com/adityanmol920/Kattappa/v0.2.10/dist/bundle.js
 // @updateURL    https://raw.githubusercontent.com/adityanmol920/Kattappa/main/scripts/kattappa.user.js
 // @downloadURL  https://raw.githubusercontent.com/adityanmol920/Kattappa/main/scripts/kattappa.user.js
 // @grant        GM_getValue

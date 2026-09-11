@@ -5,16 +5,14 @@ import { storage } from './modules/storage';
 import { startGrowwBackgroundRuntime } from './modules/runtime';
 import { startPnlRuntime } from './modules/pnl';
 import { clearDirectionGate } from './modules/dom';
+import { startChartTradeButtonGate, stopChartTradeButtonGate } from './modules/chart-controls';
 
 const rootId = 'kattappa-root';
 const appId = 'kattappa-app';
 const mountDelayMs = 1500;
 let reactRoot: Root | null = null;
 let terminalVisitActive = false;
-
-storage.connect();
-startGrowwBackgroundRuntime();
-startPnlRuntime();
+const isTopLevelWindow = window.top === window.self;
 
 function isGrowwTerminal() {
   const isLocalPreview = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
@@ -47,6 +45,7 @@ function mountKattappa() {
 
 function unmountKattappa() {
   if (isGrowwTerminal()) return;
+  stopChartTradeButtonGate();
   clearDirectionGate();
   reactRoot?.unmount();
   reactRoot = null;
@@ -55,6 +54,7 @@ function unmountKattappa() {
 
 function syncKattappaRoute() {
   if (isGrowwTerminal()) {
+    startChartTradeButtonGate();
     if (!terminalVisitActive) {
       storage.beginTerminalVisit();
       terminalVisitActive = true;
@@ -76,5 +76,15 @@ function startUiRuntime() {
   window.setInterval(syncKattappaRoute, 750);
 }
 
-if (document.readyState === 'complete') startUiRuntime();
-else window.addEventListener('load', startUiRuntime, { once: true });
+if (isTopLevelWindow) {
+  storage.connect();
+  startGrowwBackgroundRuntime();
+  startPnlRuntime();
+  if (isGrowwTerminal()) startChartTradeButtonGate();
+  if (document.readyState === 'complete') startUiRuntime();
+  else window.addEventListener('load', startUiRuntime, { once: true });
+} else {
+  // If Groww isolates its chart in a matching iframe, run only the chart-button
+  // protection there. The popup and account-level runtimes belong to the top tab.
+  startChartTradeButtonGate();
+}

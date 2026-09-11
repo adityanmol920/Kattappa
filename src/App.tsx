@@ -112,8 +112,8 @@ export function App() {
     const end = () => { window.removeEventListener('pointermove', move); storage.write({ popupPosition: latestPosition.current, popupSize: latestSize.current }); };
     window.addEventListener('pointermove', move); window.addEventListener('pointerup', end, { once: true });
   }
-  if (!isOpen) return <button className="load-kattappa" type="button" onClick={() => { setIsOpen(true); storage.write({ popupOpen: true }); }}>Load Kattappa</button>;
-  return <main className="kattappa-card">
+  if (!isOpen) return <button className="load-kattappa" type="button" onClick={() => { setIsOpen(true); storage.write({ popupOpen: true }); }}>Kattappa</button>;
+  return <><div className="kattappa-overlay" aria-hidden="true" /><main className="kattappa-card">
     <header onPointerDown={startDrag}><b>Kattappa</b><span>Trading discipline · drag here</span><button type="button" className="close-kattappa" aria-label="Hide Kattappa" title="Hide Kattappa" onClick={() => { setIsOpen(false); storage.write({ popupOpen: false }); }}>×</button></header>
     <section className="stats"><Stat label="Capital" value={`₹${format(state.capital)}`} /><Stat label="Day P&L" value={`₹${format(state.dayPnl)}`} tone={state.dayPnl == null ? '' : state.dayPnl >= 0 ? 'good' : 'bad'} detail={dayPercent == null ? '' : `${dayPercent.toFixed(2)}%`} /><Stat label="Open P&L" value={`₹${format(state.openTradePnl)}`} tone={state.openTradePnl == null ? '' : state.openTradePnl >= 0 ? 'good' : 'bad'} /><Stat label="Direction" value={state.bias ?? 'LOCKED'} tone={(state.bias ?? 'LOCKED') === 'CE' ? 'good' : (state.bias ?? 'LOCKED') === 'PE' ? 'bad' : 'warn'} /></section>
     {state.killTriggered && <aside className="notice bad"><b>Kill switch triggered.</b> {state.killTriggered.reason}</aside>}
@@ -126,6 +126,6 @@ export function App() {
     <footer>DOM-only · Browser storage key: <code>{storage.key}</code></footer>
     {(['n', 'e', 's', 'w'] as const).map(edge => <div key={edge} className={`drag-boundary ${edge}`} onPointerDown={startDrag} aria-label="Drag Kattappa" />)}
     {(['n', 'ne', 'e', 'se', 's', 'sw', 'w', 'nw'] as Direction[]).map(direction => <div key={direction} className={`resize-handle ${direction}`} onPointerDown={event => startResize(event, direction)} />)}
-  </main>;
+  </main></>;
 }
 function Stat({ label, value, tone = '', detail = '' }: { label: string; value: string; tone?: string; detail?: string }) { return <div className="stat"><small>{label}</small><b className={tone}>{value}</b>{detail && <small>{detail}</small>}</div>; }
